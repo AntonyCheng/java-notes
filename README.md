@@ -425,11 +425,11 @@
       * [collect将流转换为其他形式(很重要)](#collect将流转换为其他形式很重要)
       * [所有总结操作的方法列表](#所有总结操作的方法列表)
     * [练习](#练习-1)
-* [53.Optional类](#53optional类)
+* [52.Optional类](#52optional类)
   * [创建Optional对象](#创建optional对象)
   * [从Optional容器中取出所包装的对象](#从optional容器中取出所包装的对象)
   * [练习](#练习-2)
-* [54.JDK8的接口新特性](#54jdk8的接口新特性)
+* [53.JDK8的接口新特性](#53jdk8的接口新特性)
   * [jdk8之前的接口](#jdk8之前的接口)
   * [jdk8之后的接口](#jdk8之后的接口)
 
@@ -22178,7 +22178,7 @@ class Person {
 
 ![image-20220510180052634](./assets/image-20220510180052634.png)
 
-# 53.Optional类
+# 52.Optional类
 
 到目前为止，臭名昭著的空指针异常是导致Java应用程序失败的最常见原因。以前，为了解决空指针异常，Google公司著名的Guava项目引入了Optional类，Guava通过使用检查空值的方式来防止代码污染，它鼓励程序员写更干净的代码。受到Google Guava的启发，Optional类已经成为Java 8类库的一部分；
 
@@ -22451,11 +22451,250 @@ public void test1(){
 }
 ```
 
-# 54.JDK8的接口新特性
+# 53.JDK8新特性
 
-## jdk8之前的接口
+## 前言
 
-在jdk8之前，interface之中可以定义变量和方法，变量必须是public、static、final的，方法必须是public、abstract的。由于这些修饰符都是默认的以下写法等价 
+到此为止，Java 的基础知识都已经全部展现出来了，但是随着 Java 的更新迭代，Java 不同版本之间会出现一些显著特性，之前有关 Java 基础知识的所有文章均是基于 JDK8 版本所描述的，此后的文章就会推出 JDK8 之后版本的特性介绍。
+
+本章节是“JDK8新特性“，但有一些已经在以往的文章中做出过介绍，它们的文章索引如下：
+
+- [50.Lambda表达式](#50lambda表达式)
+- [51.Stream流](#51stream流)
+- [52.Optional类](#52optional类)
+
+## 收集器Collectors
+
+ `java.util.stream.Collectors` 实现了 `java.util.stream.Collector` 接口，同时又提供了大量的方法对流 ( stream ) 的元素执行 Map And Reduce 操作，或者统计操作，**Collectors主要用于 `stream.collect()` 方法中。**
+
+其实在以往的文章中用到过该工具类，例如：
+
+```java
+public static void main(String[] args) {
+    List<Integer> collect = Stream.of(1, 2, 3, 4, 5)
+            .collect(Collectors.toList());
+    System.out.println(collect);
+}
+```
+
+打印效果如下：
+
+```
+[1, 2, 3, 4, 5]
+```
+
+接下来认识一些更多的常见 API 。
+
+### 求平均值averagingXXX
+
+`avergingXXX()` 是一类方法，主要用于在流式计算中获取流中元素的平均值，接下来主要以 `averagingDouble()` 方法为例。
+
+`averagingDouble()` 方法将流中的所有元素视为 Double 类型并计算他们的平均值，这些元素均为 Number 类型，计算后的平均值返回为 Double 类型。
+
+```java
+public static void main(String[] args) {
+    Double collect = Stream.of(1f, 2f, 3f, 4f, 5f)
+            .collect(Collectors.averagingDouble(d -> d));
+    System.out.println(collect);
+}
+```
+
+打印结果如下：
+
+```
+3.0
+```
+
+类似的还有 `averagingInt()` 、`averagingLong()` 两个方法，不同点是它们将流中的元素分别视为 Integer 类型和 Long 类型，以及类型之间不可转换的问题。
+
+### 次序操作collectingAndThen
+
+`Collectors.collectingAndThen()` 函数应该最像 Map And Reduce 过程，它可接受两个函数式参数，第一个参数用于 Reduce 操作，而第二参数用于 Map 操作，也就是说第二个参数处理完之后的流会传递给第一个参数进行处理，例如现在将一个流中的数字“+1”之后再求平均值：
+
+```java
+public static void main(String[] args) {
+    Double collect = Stream.of(1f, 2f, 3f, 4f, 5f)
+            .collect(Collectors.collectingAndThen(Collectors.averagingDouble(v -> v),
+                    s -> s + 1));
+    System.out.println(collect);
+}
+```
+
+打印效果如下：
+
+```
+4.0
+```
+
+### 计数counting
+
+`Collectors.counting()` 用于统计流中元素的个数，例如：
+
+```java
+public static void main(String[] args) {
+    Long collect = Stream.of(1f, 2f, 3f, 4f, 5f)
+            .collect(Collectors.counting());
+    System.out.println(collect);
+}
+```
+
+打印效果如下：
+
+```
+5
+```
+
+### 内容拼接joining
+
+`Collectors.joining()` 方法用某个指定的拼接字符把所有的字符串流元素拼接成一个字符串，并添加可选的前缀和后缀，例如：
+
+```java
+public static void main(String[] args) {
+    String collect = Stream.of(1, 2, 3, 4, 5)
+            .map(Object::toString)
+            .collect(Collectors.joining(",", "prefix", "suffix"));
+    System.out.println(collect);
+}
+```
+
+打印效果如下：
+
+```
+prefix1,2,3,4,5suffix
+```
+
+### 最值maxBy&minBy
+
+`Collectors.maxBy()` 和 `Collectors.minBy()` 两个方法分别用于计算流中所有元素的最大值和最小值。两个方法都可以接受一个比较器作为参数，用于设计如何计算最大值或最小值，例如将字符串转换成字符，然后“+1”，同时转换成字符串，最后计算最大值：
+
+```java
+Optional<String> collect = Stream.of("A", "B", "D", "C")
+        .map(data-> String.valueOf((char) (data.charAt(0) +1)))
+        .collect(Collectors.maxBy((o1, o2) -> {
+            return o1.charAt(0) - o2.charAt(0);
+        }));
+System.out.println(collect.get());
+```
+
+打印效果如下：
+
+```
+E
+```
+
+最小值使用方法相同，这里就不进行示例演示。
+
+### 求累加和summingXXX
+
+`summingXXX()` 是一类方法，主要用于在流式计算中获取流中元素的累加和，接下来主要以 `summingInt()` 方法为例。
+
+`Collectors.summingInt()` 方法将流中的所有元素视为 Integer 类型，并计算所有元素的累加和，返回类型也是 Integer 类型：
+
+```java
+public static void main(String[] args) {
+    Integer collect = Stream.of(1, 2, 3, 4, 5)
+            .collect(Collectors.summingInt(data -> data));
+    System.out.println(collect);
+}
+```
+
+打印效果如下：
+
+```
+15
+```
+
+类似的还有 `summingDouble()` 、`summingLong()` 两个方法，不同点是它们将流中的元素分别视为 Double 类型和 Long 类型，返回值类型也一一对应，以及类型之间不可转换的问题。
+
+### 转换mapping&flatMapping
+
+`Collectors.mapping()` 和 `Collectors.flatMapping()` 可以看作是本质相同，但途径不同的 标准 Map And Reduce 过程。均有两个函数式参数，第一个参数是 Map 操作，第二个参数是 Reduce 操作，途经区别在于 `Collectors.mapping()` 方法对流中元素每次 Map 操作得到的是一个具体的值，而 `Collectors.flatMapping()` 方法对流中元素每次 Map 操作得到的是一个与元素相对应的数据流，说简单点即后者具有升维/降维的转换能力，示例如下：
+
+```java
+Stream<Integer> integerStream1 = Stream.of(1, 2, 3, 4, 5);
+List<Integer> collect1 = integerStream1
+        .collect(Collectors.flatMapping(data -> {
+            return Stream.of(data + 1, data * 10);
+        }, Collectors.toList()));
+System.out.println(collect1);
+Stream<Integer> integerStream2 = Stream.of(1, 2, 3, 4, 5);
+List<Integer> collect2 = integerStream2
+        .collect(Collectors.mapping(data -> {
+            return data + 1;
+        }, Collectors.toList()));
+System.out.println(collect2);
+```
+
+打印效果如下：
+
+```
+[2, 10, 3, 20, 4, 30, 5, 40, 6, 50]
+[2, 3, 4, 5, 6]
+```
+
+## 编解码器Base64
+
+Base64 是一种常见的字符编码解码方式，一般用于将二进制数据编码为更具可读性的 Base64 进制格式。
+
+Java 8 中的 `java.util.Base64` 类提供了三种类型的 Base64 编码解码格式：
+
+**1、** **简单类型( simple )**：编码字符只包含 A-Za-z0-9+/ 等 64 个字符。且编码的时候不会包含任何换行符 ( \r 、 \n 、\r\n ）。解码的时候也只会解码 A-Za-z0-9+/ 内的字符，超出的则会被拒绝。
+
+**2、** **URL**：编码字符只包含 A-Za-z0-9+_ 等 64 个字符。和 **简单类型** 相比，就是把 / 换成了 _ 。因为没有 / 字符，因此这种编码方式非常适合 URL 和文件名等。
+
+**3、** **MIME**：编码会被映射为 MIME 友好格式：每一行输出不超过 76 个字符，而且每行以 \r\n 符结束。但末尾行并不会包含 \r\n。
+
+### 内部类
+
+`java.util.Base64` 还包含了两个内部静态类，分别实现了 RFC 4648 和 RFC 2045 中规范的 Base64 编码和解码方式。
+
+| 内部类                      | 说明                                                         |
+| :-------------------------- | :----------------------------------------------------------- |
+| static class Base64.Decoder | 该类实现使用 RFC 4648 和 RFC 2045 中规定的 Base64 解码方案解码数据 |
+| static class Base64.Encoder | 该类实现使用 RFC 4648 和 RFC 2045 中规定的 Base64 编码方案编码数据 |
+
+### 静态方法
+
+`java.util.Base64` 类提供的都是静态方法。下表列出了这些静态方法：
+
+| 方法                                                         | 说明                                                         |
+| :----------------------------------------------------------- | :----------------------------------------------------------- |
+| Base64.Decoder getDecoder()                                  | 返回一个 `Base64.Decoder` 类型的 **简单** 解码器             |
+| Base64.Encoder getEncoder()                                  | 返回一个 `Base64.Encoder` 类型的 **简单** 编码器             |
+| Base64.Decoder getMimeDecoder()                              | 返回一个 `Base64.Decoder` 类型的 **MIME** 解码器             |
+| Base64.Encoder getMimeEncoder()                              | 返回一个 `Base64.Encoder` 类型的 **MINE** 编码器             |
+| Base64.Encoder getMimeEncoder( int lineLength, byte[] lineSeparator) | 返回一个 `Base64.Encoder` 类型的使用特定长度和行分隔符的 **MINE** 编码器 |
+| Base64.Decoder getUrlDecoder()                               | 返回一个 `Base64.Decoder` 类型的 **URL 和文件名安全**的解码器 |
+| Base64.Encoder getUrlEncoder()                               | 返回一个 `Base64.Encoder` 类型的 **URL 和文件名安全**的编码器 |
+
+### 用法示例
+
+这里以**简单**类型为例：
+
+```java
+public static void main(String[] args) {
+    String str = "Java Notes Of AntonyCHeng";
+    String encodeStr = Base64.getEncoder().encodeToString(str.getBytes(StandardCharsets.UTF_8));
+    String decodeStr = new String(Base64.getDecoder().decode(encodeStr));
+    System.out.println("str = " + str);
+    System.out.println("encodeStr = " + encodeStr);
+    System.out.println("decodeStr = " + decodeStr);
+}
+```
+
+打印效果如下：
+
+```
+str = Java Notes Of AntonyCHeng
+encodeStr = SmF2YSBOb3RlcyBPZiBBbnRvbnlDSGVuZw==
+decodeStr = Java Notes Of AntonyCHeng
+```
+
+## 接口默认方法
+
+### JDK8之前的接口
+
+在 JDK8 之前，interface 之中可以定义变量和方法，变量必须是 public 、static 、final 的，方法必须是 public 、abstract 的。由于这些修饰符都是默认的以下写法等价：
 
 ```java
 public interface JDK8BeforeInterface {  
@@ -22469,15 +22708,15 @@ public interface JDK8BeforeInterface {
 }
 ```
 
-## jdk8之后的接口
+### JDK8之后的接口
 
- JDK8及以后，允许我们在接口中定义static方法和default方法
+JDK8及以后，允许我们在接口中定义static方法和default方法
 
-* 接口中定义的静态static方法只能通过接口名直接调用，default的方法需要用接口的实现类的对象来调用
-* 接口中的static和default方法可以有函数体，其实现类不必要重写
-* 其他的非static和非default的都是抽象方法，没有函数体，其实现类必须重写所有的抽象方法
-* 如果子类（或实现类）继承的父类和其实现的接口定义了同名同参的方法，并且接口中的方法为default方法（都有函数体），那么该子类的对象调用该方法时（在子类没有重写该方法的情况下），默认是父类的方法（类优先性）
-* 如果类实现了多个接口，而且多个接口中定义了同名同参数的default方法（有函数体），在该类没有重写的情况下，就会报错（接口冲突）。如果想解决这个问题，就必须在该类中重写此方法。
+- 接口中定义的静态static方法只能通过接口名直接调用，default的方法需要用接口的实现类的对象来调用
+- 接口中的static和default方法可以有函数体，其实现类不必要重写
+- 其他的非static和非default的都是抽象方法，没有函数体，其实现类必须重写所有的抽象方法
+- 如果子类（或实现类）继承的父类和其实现的接口定义了同名同参的方法，并且接口中的方法为default方法（都有函数体），那么该子类的对象调用该方法时（在子类没有重写该方法的情况下），默认是父类的方法（类优先性）
+- 如果类实现了多个接口，而且多个接口中定义了同名同参数的default方法（有函数体），在该类没有重写的情况下，就会报错（接口冲突）。如果想解决这个问题，就必须在该类中重写此方法。
 
 ```java
 public interface JDK8Interface {  
@@ -22517,3 +22756,308 @@ public class AnotherJDK8InterfaceImpl implements JDK8Interface {
     }  
 }  
 ```
+
+## Nashorn JavaScript
+
+对于 Java 中的 JavaScript 引擎， Java 8 引入了 Nashorn 来代替原先的 Rhino。
+
+Nashorn 使用 Java 7 中引入的调用动态特性，且直接编译内存中的代码并将字节码传递给 JVM。这两项改进，直接给 Nashorn 带了至少 2 到 10 倍的性能提升。
+
+在 Nashorn JavaScript 引擎中。Java 8 引入了一个新的命令行工具 `jjs`，用于在控制台执行 JavaScript 代码。例如可以在当前目录下 ( 任意位置 ) 创建一个 JavaScript 文件 hello.js ，然后在命令行中使用如下命令就可以运行 hello.js 文件。
+
+## 日期时间API
+
+从 Java 5 开始，处理日期时间都由 `java.util.Date` 、`java.util.Calendar` 、`java.util.GregoiranCalendar` 和 `java.text.SimpleDateFormat` 四大类负责，分别用于处理日期、日历、日历表示、日期时间格式化。
+
+但是这些类早在很久以前就有非常多设计不合理的地方，比如 `java.util.Date` 并非线程安全； `java.util.Date` 默认的时间年月日分别从 1900，1，0 开始的，非常反人类......于是乎在 Java 8 中重新设计了所有时间、日历和时区相关的API，并且统一规划在了 `java.time` 包及其子包下。
+
+### 本地日期时间
+
+Java 8 为处理本地的日期时间提供了三个类 `LocalDate` 、`LocalTime` 和 `LocalDateTime`。分别用于处理 **本地日期**、**本地时间** 和 **本地日期时间**。
+
+当使用这三个类时，开发者并不需要关心时区是什么。因为它默认使用的是操作系统的时区。
+
+比如，可以使用 `LocalDateTime.now()` 方法返回当前的日期时间。
+
+**获取当前日期时间示例如下：**
+
+```java
+public static void main(String[] args) {
+    System.out.println("LocalDate.now() = " + LocalDate.now());
+    System.out.println("LocalTime.now() = " + LocalTime.now());
+    System.out.println("LocalDateTime.now() = " + LocalDateTime.now());
+}
+```
+
+打印效果如下：
+
+```
+LocalDate.now() = 2024-03-31
+LocalTime.now() = 16:49:37.469327600
+LocalDateTime.now() = 2024-03-31T16:49:37.469327600
+```
+
+**获取当前时间的年月日时分秒示例如下：**
+
+```java
+public static void main(String[] args) {
+    LocalDateTime dateTime = LocalDateTime.now();
+    System.out.println("dateTime = " + dateTime);
+    System.out.println("dateTime.getYear() = " + dateTime.getYear());
+    System.out.println("dateTime.getMonth() = " + dateTime.getMonth());
+    System.out.println("dateTime.getDayOfMonth() = " + dateTime.getDayOfMonth());
+    System.out.println("dateTime.getHour() = " + dateTime.getHour());
+    System.out.println("dateTime.getMinute() = " + dateTime.getMinute());
+    System.out.println("dateTime.getSecond() = " + dateTime.getSecond());
+}
+```
+
+打印结果如下：
+
+```
+dateTime = 2024-03-31T16:54:24.719364900
+dateTime.getYear() = 2024
+dateTime.getMonth() = MARCH
+dateTime.getDayOfMonth() = 31
+dateTime.getHour() = 16
+dateTime.getMinute() = 54
+dateTime.getSecond() = 24
+```
+
+**创建日期时间示例如下：**
+
+```java
+public static void main(String[] args) {
+    LocalDateTime customDateTime = LocalDateTime.of(2001, 11, 11, 12, 13, 14);
+    System.out.println("customDateTime = " + customDateTime);
+}
+```
+
+打印结果如下：
+
+```
+customDateTime = 2001-11-11T12:13:14
+```
+
+**修改日期时间示例如下：**
+
+```java
+public static void main(String[] args) {
+    LocalDateTime oldDateTime = LocalDateTime.of(2001, 11, 11, 12, 13, 14);
+    LocalDateTime newDateTime = oldDateTime
+            .withYear(2020)
+            .withMonth(1)
+            .withDayOfMonth(1)
+            .withMinute(0)
+            .withSecond(0);
+    System.out.println("oldDateTime = " + oldDateTime);
+    System.out.println("newDateTime = " + newDateTime);
+}
+```
+
+打印结果如下：
+
+```
+oldDateTime = 2001-11-11T12:13:14
+newDateTime = 2020-01-01T12:00
+```
+
+**解析字符串示例如下：**
+
+```java
+public static void main(String[] args) {
+    LocalDateTime parseDateTime = LocalDateTime.parse("2012-10-10T21:58:00");
+    LocalDateTime parseFormatDateTime = LocalDateTime.parse("2020.01.01 12:13:14", DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm:ss"));
+    System.out.println("parseDateTime = " + parseDateTime);
+    System.out.println("parseFormatDateTime = " + parseFormatDateTime);
+}
+```
+
+打印效果如下：
+
+```
+parseDateTime = 2012-10-10T21:58
+parseFormatDateTime = 2020-01-01T12:13:14
+```
+
+### 时区日期时间
+
+`LocalDateTime` 类中看似没有时区的相关信息，但是它们内部其实已经处理了时区，只是默认使用的是当前操作系统的时区。但是如果自己维护的服务器位于德国柏林，上面的 Java 程序为中国境内用户提供服务，此时就需要从代码层面约定时区，Java 8 中 `java.time.ZonedDateTime` 和 `java.time.ZoneId` 就起到了作用，前者用于处理需要时区的日期时间，后者用于处理时区。
+
+`ZonedDateTime` 和 `LocalDateTime` 类似，几乎有着相同的 API。从某些方面说，`ZonedLocalTime` 如果不传递时区信息，那么它会默认使用操作系统的时区，这样，结果其实和 `LocalDateTime` 是类似的，而且在时区确定的情况下，这两个类是可以互相转换的，示例如下：
+
+```java
+public static void main(String[] args) {
+    ZonedDateTime zonedDateTime = ZonedDateTime.now();
+    LocalDateTime localDateTime = zonedDateTime.toLocalDateTime();
+    System.out.println("zonedDateTime = " + zonedDateTime);
+    System.out.println("localDateTime = " + localDateTime);
+}
+```
+
+打印效果如下：
+
+```
+zonedDateTime = 2024-03-31T17:11:44.140144800+08:00[Asia/Shanghai]
+localDateTime = 2024-03-31T17:11:44.140144800
+```
+
+其实如果查看源码，`now()` 方法底层调用的是 `now(Clock.systemDefaultZone())` ，而 `Clock.systemDefaultZone()` 方法返回的就是一个 `new SystemClock(ZoneId.systemDefault())` ，所以这里可以得出获取本地电脑时区的方法：
+
+```java
+public static void main(String[] args) {
+    System.out.println("ZoneId.systemDefault() = " + ZoneId.systemDefault());
+}
+```
+
+打印效果如下：
+
+```
+ZoneId.systemDefault() = Asia/Shanghai
+```
+
+其实也可以直接通过没有定义时区的 `ZonedDateTime` 对象获取本地电脑时区：
+
+```java
+public static void main(String[] args) {
+    System.out.println("ZonedDateTime.now().getZone() = " + ZonedDateTime.now().getZone());
+}
+```
+
+打印效果如下：
+
+```
+ZonedDateTime.now().getZone() = Asia/Shanghai
+```
+
+在定义时区之前需要知道有哪些时区可以被我们使用，使用 `ZoneId.getAvailableZoneIds()` 方法即可查看，这里我们定义一个时区为德国柏林的2001年11月11日12时13分14秒：
+
+```java
+public static void main(String[] args) {
+    ZonedDateTime zonedDateTime = ZonedDateTime.of(2001, 11, 11, 12, 13, 14, 0, ZoneId.of("Europe/Berlin"));
+    System.out.println("zonedDateTime = " + zonedDateTime);
+}
+```
+
+打印效果如下：
+
+```
+zonedDateTime = 2001-11-11T12:13:14+01:00[Europe/Berlin]
+```
+
+### 格式化
+
+Java 8 似乎对  `java.text.SimpleDateFormat` 也不太满意，重新创建了一个 `java.time.format` 包，该包下包含了格式化的类和枚举。
+
+**java.time.format包**
+
+`java.time.format` 包提供了以下几个类用于格式化日期时间：
+
+| 类                       | 说明                                   |
+| :----------------------- | :------------------------------------- |
+| DateTimeFormatter        | 用于打印和解析日期时间对象的格式化程序 |
+| DateTimeFormatterBuilder | 创建日期时间格式化样式的构建器         |
+| DecimalStyle             | 日期和时间格式中使用的本地化十进制样式 |
+
+`java.time.format` 包还提供了以下几个枚举，包含了常见的几种日期时间格式：
+
+| 枚举          | 说明                                               |
+| :------------ | :------------------------------------------------- |
+| FormatStyle   | 包含了本地化日期，时间或日期时间格式器的样式的枚举 |
+| ResolverStyle | 包含了解决日期和时间的不同方法的枚举               |
+| SignStyle     | 包含了如何处理正/负号的方法的枚举                  |
+| TextStyle     | 包含了文本格式和解析的样式的枚举                   |
+
+**DateTimeFormatter类**
+
+DateTimeFormatter 类格式化日期时间的最重要的类，用于**打印**和**解析**日期时间对象的格式化器，而且该类是一个最终类，只能实例化，不能被扩展和继承。
+
+所有日期时间类都提供了两个重要的方法：
+
+- 一个用于格式化 `format(DateTimeFormatterformatter)` ，将日期时间类转换成字符串；
+- 另一个用于解析 `parse(CharSequencetext,DateTimeFormatterformatter)` ，将字符串转换为日期时间类。
+
+DateTimeFormatter类自带有一些格式化格式，这些格式化格式在 ZonedDateTime 类使用时全部适配，而部分格式在 LocalDateTime 类下会不兼容，示例如下：
+
+```java
+public static void main(String[] args) {
+    ZonedDateTime dateTime = ZonedDateTime.now();
+    System.out.println("dateTime.format(DateTimeFormatter.BASIC_ISO_DATE) = " + dateTime.format(DateTimeFormatter.BASIC_ISO_DATE));
+    System.out.println("dateTime.format(DateTimeFormatter.ISO_DATE) = " + dateTime.format(DateTimeFormatter.ISO_DATE));
+    System.out.println("dateTime.format(DateTimeFormatter.ISO_DATE_TIME) = " + dateTime.format(DateTimeFormatter.ISO_DATE_TIME));
+    System.out.println("dateTime.format(DateTimeFormatter.ISO_INSTANT) = " + dateTime.format(DateTimeFormatter.ISO_INSTANT));
+    System.out.println("dateTime.format(DateTimeFormatter.ISO_LOCAL_DATE) = " + dateTime.format(DateTimeFormatter.ISO_LOCAL_DATE));
+    System.out.println("dateTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) = " + dateTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+    System.out.println("dateTime.format(DateTimeFormatter.ISO_LOCAL_TIME) = " + dateTime.format(DateTimeFormatter.ISO_LOCAL_TIME));
+    System.out.println("dateTime.format(DateTimeFormatter.ISO_OFFSET_DATE) = " + dateTime.format(DateTimeFormatter.ISO_OFFSET_DATE));
+    System.out.println("dateTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME) = " + dateTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+    System.out.println("dateTime.format(DateTimeFormatter.ISO_OFFSET_TIME) = " + dateTime.format(DateTimeFormatter.ISO_OFFSET_TIME));
+    System.out.println("dateTime.format(DateTimeFormatter.ISO_ORDINAL_DATE) = " + dateTime.format(DateTimeFormatter.ISO_ORDINAL_DATE));
+    System.out.println("dateTime.format(DateTimeFormatter.ISO_TIME) = " + dateTime.format(DateTimeFormatter.ISO_TIME));
+    System.out.println("dateTime.format(DateTimeFormatter.ISO_WEEK_DATE) = " + dateTime.format(DateTimeFormatter.ISO_WEEK_DATE));
+    System.out.println("dateTime.format(DateTimeFormatter.ISO_ZONED_DATE_TIME) = " + dateTime.format(DateTimeFormatter.ISO_ZONED_DATE_TIME));
+    System.out.println("dateTime.format(DateTimeFormatter.RFC_1123_DATE_TIME) = " + dateTime.format(DateTimeFormatter.RFC_1123_DATE_TIME));
+}
+```
+
+打印效果如下：
+
+```
+dateTime.format(DateTimeFormatter.BASIC_ISO_DATE) = 20240331+0800
+dateTime.format(DateTimeFormatter.ISO_DATE) = 2024-03-31+08:00
+dateTime.format(DateTimeFormatter.ISO_DATE_TIME) = 2024-03-31T17:50:14.8944319+08:00[Asia/Shanghai]
+dateTime.format(DateTimeFormatter.ISO_INSTANT) = 2024-03-31T09:50:14.894431900Z
+dateTime.format(DateTimeFormatter.ISO_LOCAL_DATE) = 2024-03-31
+dateTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) = 2024-03-31T17:50:14.8944319
+dateTime.format(DateTimeFormatter.ISO_LOCAL_TIME) = 17:50:14.8944319
+dateTime.format(DateTimeFormatter.ISO_OFFSET_DATE) = 2024-03-31+08:00
+dateTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME) = 2024-03-31T17:50:14.8944319+08:00
+dateTime.format(DateTimeFormatter.ISO_OFFSET_TIME) = 17:50:14.8944319+08:00
+dateTime.format(DateTimeFormatter.ISO_ORDINAL_DATE) = 2024-091+08:00
+dateTime.format(DateTimeFormatter.ISO_TIME) = 17:50:14.8944319+08:00
+dateTime.format(DateTimeFormatter.ISO_WEEK_DATE) = 2024-W13-7+08:00
+dateTime.format(DateTimeFormatter.ISO_ZONED_DATE_TIME) = 2024-03-31T17:50:14.8944319+08:00[Asia/Shanghai]
+dateTime.format(DateTimeFormatter.RFC_1123_DATE_TIME) = Sun, 31 Mar 2024 17:50:14 +0800
+```
+
+除了上面自带的格式，还允许按照一定规则自定义格式，示例如下：
+
+```java
+public static void main(String[] args) {
+    ZonedDateTime nowDateTime = ZonedDateTime.now();
+    System.out.println("nowDateTime = " + nowDateTime);
+    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
+    String formatterDateTime = nowDateTime.format(formatter);
+    System.out.println("formatterDateTime = " + formatterDateTime);
+}
+```
+
+打印效果如下：
+
+```
+nowDateTime = 2024-03-31T17:58:17.194510800+08:00[Asia/Shanghai]
+formatterDateTime = 2024/03/31 17:58:17
+```
+
+当然这里可以使用刚刚提到的 `parse()` 方法将日期时间从字符串解析回来，但要注意自定义格式中没有时区信息，所以不能使用 ZonedDateTime 类去解析，而要使用 LocalDateTime 类，示例如下：
+
+```java
+public static void main(String[] args) {
+    ZonedDateTime nowDateTime = ZonedDateTime.now();
+    System.out.println("nowDateTime = " + nowDateTime);
+    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
+    String formatterDateTime = nowDateTime.format(formatter);
+    System.out.println("formatterDateTime = " + formatterDateTime);
+    LocalDateTime parseDateTime = LocalDateTime.parse(formatterDateTime, formatter);
+    System.out.println("parseDateTime = " + parseDateTime);
+}
+```
+
+打印效果如下：
+
+```
+nowDateTime = 2024-03-31T18:02:24.353967+08:00[Asia/Shanghai]
+formatterDateTime = 2024/03/31 18:02:24
+parseDateTime = 2024-03-31T18:02:24
+```
+
