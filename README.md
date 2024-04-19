@@ -23061,3 +23061,1655 @@ formatterDateTime = 2024/03/31 18:02:24
 parseDateTime = 2024-03-31T18:02:24
 ```
 
+# 54.JDK9新特性
+
+## 模块化
+
+### 模块化的概念
+
+Java 9 为了引入新的模块化的编程方式，特意增强和改进了一些功能，也添加了一些新的特性：
+
+1. Java程序编译运行过程中，引入了一个新的可选的阶段「链接时间」( linktime )，这个阶段介于编译时和运行时之间，在该阶段，可以组装和优化一组模块，可以使用 jLink 工具制作自定义运行时镜像 ( image )；
+2. javac 、jlink 和 java 三个命令都添加了一些可选项用于指定模块路径，这些选项用于指定模块的定义位置；
+3. 增强 JAR 格式，更新 JAR 格式更新为模块化 JAR ，并且在 JAR 根目录下包含 module-info.class 文件；
+4. 引入了 JMOD 格式，这种一种类似于 JAR 的新的打包格式，这种格式中可以包含本地( native )代码和配置文件；
+5. 特意引入了 module 关键字，用于定义一个模块，不过这个关键字仅限于 module-info.java 中使用。
+
+从 Java 9 为模块化的改变来看，Java 9 中的模块化其实就是一个 JAR 或 JMOD 格式的归档文件，该归档文件里包含了一些代码和数据还有一些配置文件，其中一定包含了一个名为 module-info.class 的文件，在该文件中定义了模块的一些信息。
+
+### 创建一个 Java 9 模块
+
+假设我们要定义一个 Java 9 模块，模块名为 `top.sharehome.module.test` ，工作目录为 `D:\module\java` ，项目名为 `test-module`。
+
+1、首先创建相关目录：
+
+![image-20240419094036321](./assets/image-20240419094036321.png)
+
+注意，目录名和模块名要一致。
+
+如果使用 tree . 命令，可以看到目录结构如下：
+
+```shell
+d:\module\java\test-module\src>tree .
+卷 Data 的文件夹 PATH 列表
+卷序列号为 0E27-4777
+D:\MODULE\JAVA\TEST-MODULE\SRC
+└─top.sharehome.module.test
+
+d:\module\java\test-module\src>
+```
+
+2、在 `\src\top.sharehome.module.test` 目录下新建一个名为 `module-info.java` 文件，并输入以下内容：
+
+![image-20240419094117199](./assets/image-20240419094117199.png)
+
+3、添加源码包，假设测试代码都处于 `top.module.test` 包下，那么就要在 `\src\top.sharehome.module.test` 目录下再创建目录 `top\module\test`：
+
+![image-20240419094414506](./assets/image-20240419094414506.png)
+
+4、然后在这个称之为 `top\module\test` 的包下创建一个名为 `ModuleTester.java` 的文件，用于测试目的：
+
+![image-20240419094602261](./assets/image-20240419094602261.png)
+
+> 这是是方便起见，也是管理，所以将源代码及其包放在模块的目录下。
+
+5、和 `src` 同级文件夹下创建一个文件夹 `mods`，然后再这个目录下创建一个和模块名相同的目录结构，如下：
+
+![image-20240419094926429](./assets/image-20240419094926429.png)
+
+6、接下来，跳转到 `d:\module\java\test-module\` 目录，并使用下面的命令来编译模块；
+
+```shell
+D:\module\java\test-module>javac -d mods/top.sharehome.module.test src/top.sharehome.module.test/module-info.java src/top.sharehome.module.test/top/module/test/ModuleTester.java
+```
+
+上面的命令运行完之后，目录结构如下：
+
+```shell
+D:\module\java\test-module>tree /F
+卷 Data 的文件夹 PATH 列表
+卷序列号为 0E27-4777
+D:.
+├─mods
+│  └─top.sharehome.module.test
+│      │  module-info.class
+│      │
+│      └─top
+│          └─module
+│              └─test
+│                      ModuleTester.class
+│
+└─src
+    └─top.sharehome.module.test
+        │  module-info.java
+        │
+        └─top
+            └─module
+                └─test
+                        ModuleTester.java
+```
+
+7、还是在当前目录下就可以使用 `java` 命令来运行刚刚编译好的模块了：
+
+```shell
+D:\module\java\test-module>java --module-path mods -m top.sharehome.module.test/top.module.test.ModuleTester
+Hello World!
+```
+
+## REPL（JShell）
+
+REPL ，全称 Read Eval Print Loop ,中文 「交互式解释器」，其实，就是一种代码所见即所得的即时编译器，Java 9 引入了 REPL ，并将其命令为 「 JShell 」 ，这真是我们 Java 开发的福音，以后演示代码的时候再也不用搬着一个 IDE 到处跑了，对于我们 Java 开发者来说，应该是 Java 9 带来的最大的个性吧。我们终于可以像 Python 、 Ruby 和 Node.js 那样在 Shell 可见即可得的运行一些范例代码，也就是说，使用 REPL，我们可以编写和测试基于 Java 的逻辑，无需使用 javac 进行编译，直接查看计算结果。
+
+### 运行JShell
+
+打开命令行终端，输入 `jshell` 进入 `JShell`，该启动过程有些缓慢：
+
+```shell
+D:\Dependence\Java11\bin>jshell.exe
+|  欢迎使用 JShell -- 版本 11.0.14
+|  要大致了解该版本, 请键入: /help intro
+```
+
+正如提示那样，我们可以输入 /help 来获得一些帮助：
+
+```shell
+jshell> /help
+|  键入 Java 语言表达式, 语句或声明。
+|  或者键入以下命令之一:
+|  /list [<名称或 id>|-all|-start]
+|       列出您键入的源
+|  /edit <名称或 id>
+|       编辑源条目
+|  /drop <名称或 id>
+|       删除源条目
+|  /save [-all|-history|-start] <文件>
+|       将片段源保存到文件
+|  /open <file>
+|       打开文件作为源输入
+|  /vars [<名称或 id>|-all|-start]
+|       列出已声明变量及其值
+|  /methods [<名称或 id>|-all|-start]
+|       列出已声明方法及其签名
+|  /types [<名称或 id>|-all|-start]
+|       列出类型声明
+|  /imports
+|       列出导入的项
+|  /exit [<integer-expression-snippet>]
+|       退出 jshell 工具
+|  /env [-class-path <路径>] [-module-path <路径>] [-add-modules <模块>] ...
+|       查看或更改评估上下文
+|  /reset [-class-path <路径>] [-module-path <路径>] [-add-modules <模块>]...
+|       重置 jshell 工具
+|  /reload [-restore] [-quiet] [-class-path <路径>] [-module-path <路径>]...
+|       重置和重放相关历史记录 -- 当前历史记录或上一个历史记录 (-restore)
+|  /history [-all]
+|       您键入的内容的历史记录
+|  /help [<command>|<subject>]
+|       获取有关使用 jshell 工具的信息
+|  /set editor|start|feedback|mode|prompt|truncation|format ...
+|       设置配置信息
+|  /? [<command>|<subject>]
+|       获取有关使用 jshell 工具的信息
+|  /!
+|       重新运行上一个片段 -- 请参阅 /help rerun
+|  /<id>
+|       按 ID 或 ID 范围重新运行片段 -- 参见 /help rerun
+|  /-<n>
+|       重新运行以前的第 n 个片段 -- 请参阅 /help rerun
+|
+|  有关详细信息, 请键入 '/help', 后跟
+|  命令或主题的名称。
+|  例如 '/help /list' 或 '/help intro'。主题:
+|
+|  intro
+|       jshell 工具的简介
+|  keys
+|       类似 readline 的输入编辑的说明
+|  id
+|       片段 ID 以及如何使用它们的说明
+|  shortcuts
+|       片段和命令输入提示, 信息访问以及
+|       自动代码生成的按键说明
+|  context
+|       /env /reload 和 /reset 的评估上下文选项的说明
+|  rerun
+|       重新评估以前输入片段的方法的说明
+```
+
+如果要查看某个具体的命令的帮助信息，可以输入 `/help [command]` 来获得，比如 `/help intro` 获取工具简介：
+
+```shell
+jshell> /help intro
+|
+|                                   intro
+|                                   =====
+|
+|  使用 jshell 工具可以执行 Java 代码，从而立即获取结果。
+|  您可以输入 Java 定义（变量、方法、类等等），例如：int x = 8
+|  或 Java 表达式，例如：x + x
+|  或 Java 语句或导入。
+|  这些小块的 Java 代码称为“片段”。
+|
+|  这些 jshell 工具命令还可以让您了解和
+|  控制您正在执行的操作，例如：/list
+|
+|  有关命令的列表，请执行：/help
+```
+
+### 查看JShell默认导入哪些包
+
+可以使用 `/imports` 命令查看 `JShell` 默认导入了哪些包：
+
+```shell
+jshell> /imports
+|    import java.io.*
+|    import java.math.*
+|    import java.net.*
+|    import java.nio.file.*
+|    import java.util.*
+|    import java.util.concurrent.*
+|    import java.util.function.*
+|    import java.util.prefs.*
+|    import java.util.regex.*
+|    import java.util.stream.*
+```
+
+### 使用import命令导入某个包或文件
+
+```shell
+jshell> import java.lang.*
+
+jshell> /imports
+|    import java.io.*
+|    import java.math.*
+|    import java.net.*
+|    import java.nio.file.*
+|    import java.util.*
+|    import java.util.concurrent.*
+|    import java.util.function.*
+|    import java.util.prefs.*
+|    import java.util.regex.*
+|    import java.util.stream.*
+|    import java.lang.*
+```
+
+### 使用JShell进行一些简单的数学运算
+
+```shell
+jshell> 6*8
+$2 ==> 48
+
+jshell> 12/8
+$3 ==> 1
+
+jshell> $2 + $3
+$4 ==> 49
+```
+
+`JShell` 会将每一此执行的结果保存到一个以 `$` 开始的变量中，而后面，我们就可以对这些变量进行引用。
+
+### JShell中默认的上下文
+
+可以在 `JShell` 中使用平时在 `Java` 中使用的类和方法来获取当前的运行上下文。
+
+1、获取当前的执行线程：
+
+```shell
+jshell> Thread.currentThread()
+$5 ==> Thread[main,5,main]
+```
+
+2、获取当前执行的方法名：
+
+```shell
+jshell> Thread.currentThread().getStackTrace()[2].getMethodName()
+$6 ==> "invoke0"
+```
+
+3、获取当前执行的类名：
+
+```shell
+jshell> Thread.currentThread().getStackTrace()[2].getClassName()
+$7 ==> "jdk.internal.reflect.NativeMethodAccessorImpl"
+```
+
+### 在JShell中定义一些方法
+
+因为内部方法和内部类的关系，还可以在 JShell 中定义和使用方法：
+
+1、在一行定义：
+
+```shell
+jshell> int doubled(int i){ return i*2;}
+|  已创建 方法 doubled(int)
+```
+
+2、在多行定义：
+
+```shell
+jshell> int add(int i,int j){
+   ...> return i+j;
+   ...> }
+|  已创建 方法 add(int,int)
+```
+
+多行定义方法要遵循一条准则，就是每个换行位置必须是大括号或者双目运算符等表达式的内部换行才可以。
+
+3、重定义：
+
+```shell
+jshell> int doubled(int i){ return i*2;}
+|  已修改 方法 doubled(int)
+```
+
+4、调用方法：
+
+```shell
+jshell> add(3,2)
+$11 ==> 5
+
+jshell> doubled(9)
+$13 ==> 18
+```
+
+### 退出JShell
+
+```shell
+jshell> /exit
+|  再见
+```
+
+## 改进JavaDocs
+
+一直以来，Java 生成的文档 JavaDoc 一直使用的都是 HTML 4 格式，这次 Java 9 使用了 HTML 5，但还不是默认的，如果要输出 HTML 5 格式，还必须在命令行程序中添加 -html5 选项。
+
+### 旧的JavaDoc文档格式
+
+假设工作区是 `D:\javadoc` ，那么在其下 `src` 目录中创建一个 `JavaDocTester.java` 文件：
+
+![image-20240419104312392](./assets/image-20240419104312392.png)
+
+然后就可以使用 `javadoc` 命令输出该类的文档：
+
+```shell
+D:\javadoc\src>javadoc.exe -encoding UTF-8 -d . JavaDocTester.j
+ava
+正在加载源文件JavaDocTester.java...
+正在构造 Javadoc 信息...
+javadoc: 警告 - 未指定要使用的 HTML 版本。
+默认值当前为 HTML 4.01，但在未来发行版中
+将更改为 HTML5。要隐藏此警告，请使用 -html4 
+或 -html5 选项，指定要由此 doclet 生成的、
+在文档注释中使用的 HTML 版本。
+标准 Doclet 版本 10.0.2
+正在构建所有程序包和类的树...
+正在生成./JavaDocTester.html...
+正在生成./package-frame.html...
+正在生成./package-summary.html...
+正在生成./package-tree.html...
+正在生成./constant-values.html...
+正在构建所有程序包和类的索引...
+正在生成./overview-tree.html...
+正在生成./index-all.html...
+正在生成./deprecated-list.html...
+正在构建所有类的索引...
+正在生成./allclasses-frame.html...
+正在生成./allclasses-frame.html...
+正在生成./allclasses-noframe.html...
+正在生成./allclasses-noframe.html...
+正在生成./index.html...
+正在生成./help-doc.html...
+1 个警告
+```
+
+可以看到 `javadoc` 默认使用的还是 `html 4.0.1` 版本，可以在浏览器中打开生成的 `index.html` 文件：
+
+![image-20240419105024128](./assets/image-20240419105024128.png)
+
+### 新的JavaDoc文档格式
+
+从上面的输出结果中还可以看出，可以使用 `-html5` 选项指定输出结果为 `HTML 5` ：
+
+```shell
+D:\javadoc\src>javadoc -html5 -encoding UTF-8 -d . JavaDocTester.java 
+正在加载源文件JavaDocTester.java...
+正在构造 Javadoc 信息...
+标准 Doclet 版本 10.0.2
+正在构建所有程序包和类的树...
+正在生成./JavaDocTester.html...
+正在生成./package-frame.html...
+正在生成./package-summary.html...
+正在生成./package-tree.html...
+正在生成./constant-values.html...
+正在构建所有程序包和类的索引...
+正在生成./overview-tree.html...
+正在生成./index-all.html...
+正在生成./deprecated-list.html...
+正在构建所有类的索引...
+正在生成./allclasses-frame.html...
+正在生成./allclasses-frame.html...
+正在生成./allclasses-noframe.html...
+正在生成./allclasses-noframe.html...
+正在生成./index.html...
+正在生成./help-doc.html...
+```
+
+当使用HTML 5 格式时，输出日志都变少，然后打开当前目录下的 index.html ，可以发现页面长的还是一样：
+
+![image-20240419122327914](./assets/image-20240419122327914.png)
+
+## 多版本共存JAR
+
+Java 9 之前的 JAR 格式中只能包含一个 Java 版本，显然，这是不符合 Java 这种开启了版本帝的发展线路了，想想，现在大多数 Java 还停留在 Java 6 7 8 的年代，Java 10 已经发布，如果要发布一个 JAR 格式的类库，意味着要编译多个版本的 JAR 所以 Java 9 开始支持多版本共存的 JAR 了。Java 9 引入了一个新的功能，其实也不算，就是增强了 JAR 格式，可以在同一个 JAR 中维护和使用不同版本的 java 类或资源。
+
+### JAR多版本共存原理
+
+首先在 JAR 中，文件 MANIFEST.MF 文件的 main 节中有一个条目 Multi-Release:true，用于指定该 JAR 包是多 Java 版本共存的。同时，JAR 目录下的子目录 META-INF 还包含一个 versions 子目录，其子目录 (从 9 开始，用于 Java 9) 存储特定于版本的类和资源文件。
+
+### 多版本编译示例
+
+```shell
+javac --release 10 -d java10  src/main/java10/top.sharehome/MultiReleaseJarTester.java
+javac --release 9  -d java9   src/main/java9/top.sharehome/MultiReleaseJarTester.java
+javac --release 8  -d java8   src/main/java8/top.sharehome/MultiReleaseJarTester.java
+```
+
+最重要的就是带上 `--release [version]` 属性。
+
+**注意**：
+
+首先，没必要特别区分 `java10`、 `java9`、` java8`这几个目录，如果代码都相同，只要一份即可；
+
+其次，多版本真正最重要的是编译的时候带上 `--release [version]` 版本号，用来指定编译版本；
+
+最后，一定要存在一个默认版本，一般情况下，可以使用主流版本为默认版本，这个默认版本可以不用添加 `--release` 参数；
+
+## 集合不可变实例工厂方法
+
+### 旧的创建不可变集合的方法
+
+```java
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+public class CollectionFactoryMethodTester {
+   public static void main(String []args) {
+       Set<String> set = new HashSet<>();
+       set.add("A");
+       set.add("B");
+       set.add("C");
+       set = Collections.unmodifiableSet(set);
+       System.out.println(set);
+       
+       List<String> list = new ArrayList<>();
+       list.add("A");
+       list.add("B");
+       list.add("C");
+       list = Collections.unmodifiableList(list);
+       System.out.println(list);
+       
+       Map<String, String> map = new HashMap<>();
+       map.put("A","Apple");
+       map.put("B","Boy");
+       map.put("C","Cat");
+       map = Collections.unmodifiableMap(map);
+       System.out.println(map);
+   }
+}
+```
+
+运行结果如下：
+
+```java
+[A, B, C]
+[A, B, C]
+{A=Apple, B=Boy, C=Cat}
+```
+
+创建可变集合很简单，但是创建不可变集合则先需要创建一个可变集合，然后再使用 `Collections.unmodifiable{Map,Set,List}` 创建不可变集合。
+
+### 新的创建不可变集合的方法
+
+在 Java 9 中，下面的方法以及它们的重载方法可用于创建各自集合的不可变实例：
+
+1、创建不可变的列表(List)；
+
+```java
+static <E> List<E> of(E e1, E e2, E e3);
+```
+
+2、创建不可变的集合(Set)；
+
+```java
+static <E> Set<E>  of(E e1, E e2, E e3);
+```
+
+3、创建不可变的哈希表(Hash)；
+
+```java
+static <K,V> Map<K,V> of(K k1, V v1, K k2, V v2, K k3, V v3);
+
+static <K,V> Map<K,V> ofEntries(Map.Entry<? extends K,? extends V>... entries)
+```
+
+其实就是添加给各个集合接口添加了 of() 方法 ，用于定义三种集合的不可变实例，而它们的参数，就是不可变实例的所有元素。
+
+但是，这些方法还是有一些限制的
+
+1、对于 List 和 Set 和 Map 三个接口的 `of()` 方法，重载方法的参数有0～10个不等；
+2、对于 List 和 Set 和 `of()` 方法，有些重载还包含了一个参数 args 用于接受数量不定的值，这样就可以创建包含任意数量的List、Set；
+3、如果要创建的不可变哈希(HashMap)的数量超过了10个，就不能再用of()方法了，而需要使用 `ofEntries()` 方法；
+
+```java
+import java.util.*;
+
+public class Demo {
+    public static void main(String[] args) {
+        Set<String> set = Set.of("A", "B", "C");
+        System.out.println(set);
+        List<String> list = List.of("A", "B", "C");
+        System.out.println(list);
+        Map<String, String> map = Map.of("A", "Apple", "B", "Boy", "C", "Cat");
+        System.out.println(map);
+        Map<String, String> map1 = Map.ofEntries(new AbstractMap.SimpleEntry<>("A", "Apple"), new AbstractMap.SimpleEntry<>("B", "Boy"), new AbstractMap.SimpleEntry<>("C", "Cat"));
+        System.out.println(map1);
+    }
+}
+```
+
+运行结果如下：
+
+```java
+[C, B, A]
+[A, B, C]
+{C=Cat, B=Boy, A=Apple}
+{C=Cat, B=Boy, A=Apple}
+```
+
+## 接口的私有方法
+
+### Java8之前的接口
+
+回忆一下，Java 8 之前的接口就只允许两种类型的数据，一个是常量、另一个就是公开 ( public ) 的抽象方法 ( abstract )，也就是说，Java 8 之前的版本不存在有着默认实现的方法。
+
+接下来有一个示例代码：
+
+```java
+public class InterfacePrivateMethodTester {
+
+   public static void main(String []args) {
+      LogOracle log = new LogOracle();
+      log.logInfo("");
+      log.logWarn("");
+      log.logError("");
+      log.logFatal("");
+      LogMySql log1 = new LogMySql();
+      log1.logInfo("");
+      log1.logWarn("");
+      log1.logError("");
+      log1.logFatal("");
+   }
+}
+final class LogOracle implements Logging {
+
+   @Override
+   public void logInfo(String message) {
+      getConnection();
+      System.out.println("Log Message : " + "INFO");
+      closeConnection();
+   }
+   @Override
+   public void logWarn(String message) {
+      getConnection();
+      System.out.println("Log Message : " + "WARN");
+      closeConnection();
+   }
+   @Override
+   public void logError(String message) {
+      getConnection();
+      System.out.println("Log Message : " + "ERROR");
+      closeConnection();
+   }
+   @Override
+   public void logFatal(String message) {
+      getConnection();
+      System.out.println("Log Message : " + "FATAL");
+      closeConnection();
+   }
+   @Override
+   public void getConnection() {
+      System.out.println("Open Database connection");
+   }
+   @Override
+   public void closeConnection() {
+      System.out.println("Close Database connection");
+   }
+}
+final class LogMySql implements Logging {
+
+   @Override
+   public void logInfo(String message) {
+      getConnection();
+      System.out.println("Log Message : " + "INFO");
+      closeConnection();
+   }
+   @Override
+   public void logWarn(String message) {
+      getConnection();
+      System.out.println("Log Message : " + "WARN");
+      closeConnection();
+   }
+   @Override
+   public void logError(String message) {
+      getConnection();
+      System.out.println("Log Message : " + "ERROR");
+      closeConnection();
+   }
+   @Override
+   public void logFatal(String message) {
+      getConnection();
+      System.out.println("Log Message : " + "FATAL");
+      closeConnection();
+   }
+   @Override
+   public void getConnection() {
+      System.out.println("Open Database connection");
+   }
+   @Override
+   public void closeConnection() {
+      System.out.println("Close Database connection");
+   }
+}
+interface Logging {
+   String ORACLE = "Oracle_Database";
+   String MYSQL = "MySql_Database";
+
+   void logInfo(String message);
+   void logWarn(String message);
+   void logError(String message);
+   void logFatal(String message);
+
+   void getConnection();
+   void closeConnection();
+}
+```
+
+运行结果如下：
+
+```shell
+Open Database connection
+Log Message : INFO
+Close Database connection
+Open Database connection
+Log Message : WARN
+Close Database connection
+Open Database connection
+Log Message : ERROR
+Close Database connection
+Open Database connection
+Log Message : FATAL
+Close Database connection
+Open Database connection
+Log Message : INFO
+Close Database connection
+Open Database connection
+Log Message : WARN
+Close Database connection
+Open Database connection
+Log Message : ERROR
+Close Database connection
+Open Database connection
+Log Message : FATAL
+Close Database connection
+```
+
+### Java8的接口
+
+Java 8 也终于作出了一些改变，Java 8 中的接口，可以具有以下类型的变量和方法：
+
+1、常量；
+2、虚方法；
+3、默认方法；
+4、静态方法；
+
+将上面的范例改一改，使用 Java 8 的特性：
+
+```java
+public class InterfacePrivateMethodTester {
+   public static void main(String []args) {
+      LogOracle log = new LogOracle();
+      log.logInfo("");
+      log.logWarn("");
+      log.logError("");
+      log.logFatal("");
+
+      LogMySql log1 = new LogMySql();
+      log1.logInfo("");
+      log1.logWarn("");
+      log1.logError("");
+      log1.logFatal("");
+   }
+}
+
+final class LogOracle implements Logging {}
+
+final class LogMySql implements Logging {}
+interface Logging {
+   String ORACLE = "Oracle_Database";
+   String MYSQL = "MySql_Database";
+
+   default void logInfo(String message) {
+      getConnection();
+      System.out.println("Log Message : " + "INFO");
+      closeConnection();
+   }
+   default void logWarn(String message) {
+      getConnection();
+      System.out.println("Log Message : " + "WARN");
+      closeConnection();
+   }
+   default void logError(String message) {
+      getConnection();
+      System.out.println("Log Message : " + "ERROR");
+      closeConnection();
+   }
+   default void logFatal(String message) {
+      getConnection();
+      System.out.println("Log Message : " + "FATAL");
+      closeConnection();
+   }
+   static void getConnection() {
+      System.out.println("Open Database connection");
+   }
+   static void closeConnection() {
+      System.out.println("Close Database connection");
+   }
+}
+```
+
+运行结果如下：
+
+```shell
+Open Database connection
+Log Message : INFO
+Close Database connection
+Open Database connection
+Log Message : WARN
+Close Database connection
+Open Database connection
+Log Message : ERROR
+Close Database connection
+Open Database connection
+Log Message : FATAL
+Close Database connection
+Open Database connection
+Log Message : INFO
+Close Database connection
+Open Database connection
+Log Message : WARN
+Close Database connection
+Open Database connection
+Log Message : ERROR
+Close Database connection
+Open Database connection
+Log Message : FATAL
+Close Database connection
+```
+
+Java 8 的接口中的方法可以有默认实现，也就是使用 default 关键字修饰的方法，所以，类实现某个接口就比较简单了，可以有选择性的实现部分方法。
+
+但是仍然有坑，就是每个默认方法中的代码，都必须完整的，而且不能调用其它的默认实现方法。
+
+### Java9的接口
+
+Java 9 中可以为接口提供私有的方法，包括私有成员方法和私有静态方法
+
+所以Java 9 中的接口，可以具有以下类型的变量和方法
+
+**1、** 常量；
+**2、** 虚方法；
+**3、** 默认方法；
+**4、** 静态方法；
+**5、** 私有静态方法；
+**6、** 私有方法；
+
+于是可以继续修改刚刚的例子，让其更简单明白些：
+
+```java
+public class InterfacePrivateMethodTester {
+   public static void main(String []args) {
+      LogOracle log = new LogOracle();
+      log.logInfo("");
+      log.logWarn("");
+      log.logError("");
+      log.logFatal("");
+
+      LogMySql log1 = new LogMySql();
+      log1.logInfo("");
+      log1.logWarn("");
+      log1.logError("");
+      log1.logFatal("");
+   }
+}
+
+final class LogOracle implements Logging {}
+
+final class LogMySql implements Logging {}
+interface Logging {
+   String ORACLE = "Oracle_Database";
+   String MYSQL = "MySql_Database";
+
+   private void log(String message, String prefix) {
+      getConnection();
+      System.out.println("Log Message : " + prefix);
+      closeConnection();
+   }
+   default void logInfo(String message) {
+      log(message, "INFO");
+   }
+   default void logWarn(String message) {
+      log(message, "WARN");
+   }
+   default void logError(String message) {
+      log(message, "ERROR");
+   }
+   default void logFatal(String message) {
+      log(message, "FATAL");
+   }
+   private static void getConnection() {
+      System.out.println("Open Database connection");
+   }
+   private static void closeConnection() {
+      System.out.println("Close Database connection");
+   }
+}
+```
+
+运行结果如下：
+
+```shell
+Open Database connection
+Log Message : INFO
+Close Database connection
+Open Database connection
+Log Message : WARN
+Close Database connection
+Open Database connection
+Log Message : ERROR
+Close Database connection
+Open Database connection
+Log Message : FATAL
+Close Database connection
+Open Database connection
+Log Message : INFO
+Close Database connection
+Open Database connection
+Log Message : WARN
+Close Database connection
+Open Database connection
+Log Message : ERROR
+Close Database connection
+Open Database connection
+Log Message : FATAL
+Close Database connection
+```
+
+## 改进进程管理API
+
+大部分人在编程之外知道有进程的东西的存在，在 Java 中反而会忽视，可能因为多线程和并发 ( Concurrency ) 的存在感更强吧。这次 Java 9 对进程管理的改进主要是提供了 ProcessHandle 类。
+
+### ProcessHandle类
+
+ProcessHandle 可以用于获取进程信息，监听和检查进程的状态，并且可以监听进程的退出，主要提供了以下几个方法：
+
+| 方法                           | 说明                                                         |
+| :----------------------------- | :----------------------------------------------------------- |
+| static allProcesses()          | 返回当前进程可见的所有进程的快照                             |
+| static current()               | 返回当前进程的 ProcessHandle 实例                            |
+| static of(long pid)            | 返回现有本机进程的 `Optional <ProcessHandle>`                |
+| children()                     | 返回进程的当前直接子进程的快照                               |
+| compareTo(ProcessHandle other) | 比较两个进程                                                 |
+| descendants()                  | 返回当前进程后代的快照                                       |
+| destroy()                      | 请求杀死当前进程                                             |
+| destroyForcibly()              | 强制杀死该进程                                               |
+| equals(Object other)           | 如果 `other` 对象为非 `null`，且具有相同的实现，并且表示相同的系统进程，则返回 true; 否则返回 false |
+| hashCode()                     | 返回此 ProcessHandle 的哈希值                                |
+| info()                         | 返回有关该进程的信息的快照                                   |
+| isAlive()                      | 测试此 ProcessHandle 表示的进程是否处于活动状态              |
+| onExit()                       | 当进程终止时返回 `CompletableFuture <ProcessHandle>`         |
+| parent()                       | 返回当前进程的父进程 `Optional<ProcessHandle>` ，因为当前进程可能是初始进程，所以父进程不一定存在 |
+| pid()                          | 返回当前进程的系统进程的 id                                  |
+| supportsNormalTermination()    | 如果 `destroy()` 正常终止进程，则返回 true                   |
+
+ProcessHandle 类用于标识并提供对 native 进程的控制，可以监控每个单独的进程的活跃度，列出其子进程 ( 线程 ) ，获取有关进程的信息或将其销毁。
+
+而很早就存在的 Process 类，它的实例由当前进程启动，只提供了对进程输入，输出和错误流的访问。
+
+native 进程 ID 是操作系统分配给进程的标识号，这个 ID 值的范围取决于操作系统，例如，嵌入式系统可能使用 16 位值。
+
+### 范例
+
+```java
+package org.dromara.system;
+
+import lombok.SneakyThrows;
+
+import java.io.IOException;
+import java.time.ZoneId;
+import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+public class ProcessHandleTester  {
+    public static void main(String[] args) throws IOException {
+        // Windows 有效
+        ProcessBuilder pb = new ProcessBuilder("notepad.exe");
+        String np = "Not Present";
+        Process p = pb.start();
+        ProcessHandle.Info info = p.info();
+        System.out.printf("Process ID : %s%n", p.pid());
+        System.out.printf("Command name : %s%n", info.command().orElse(np));
+        System.out.printf("Command line : %s%n", info.commandLine().orElse(np));
+
+        System.out.printf("Start time: %s%n",
+            info.startInstant().map(i -> i.atZone(ZoneId.systemDefault())
+                .toLocalDateTime().toString()).orElse(np));
+
+        System.out.printf("Arguments : %s%n",
+            info.arguments().map(a -> String.join(" ", a)).orElse(np));
+
+        System.out.printf("User : %s%n", info.user().orElse(np));
+        
+    }
+}
+```
+
+运行结果如下：
+
+```java
+Process ID : 13268
+Command name : C:\Program Files\WindowsApps\Microsoft.WindowsNotepad_11.2402.22.0_x64__8wekyb3d8bbwe\Notepad\Notepad.exe
+Command line : Not Present
+Start time: 2024-04-19T14:26:42.299
+Arguments : Not Present
+User : ANTONYCHENG\admin
+```
+
+## 增强流(Stream)API
+
+Java 8 中的流已经很强大了，Java 9 还不忘对其继续增强，这次的改进主要是如何设置停止流的条件上。为此在流的实例上提供了四个方法 `takeWhile(Predicate Interface)` 、`dropWhile(Predicate Interface)`、`iterate` 和 `ofNullable`。
+
+### takeWhile(Predicate Interface)
+
+`takeWhile(Predicate Interface)` 方法会处理流中所有的数据，直到条件 `predicate` 返回 `false` 为止：
+
+```java
+default Stream<T> takeWhile(Predicate<? super T> predicate)
+```
+
+`takeWhile()` 方法会返回一个有序的流(stream)，返回的流中包含了原始流中于给定条件 predicate 相匹配的所有元素的最长前缀。
+
+**示例如下**：
+
+```java
+import java.util.stream.Stream;
+
+public class StreamTakeWhileTester{
+
+   public static void main(String[] args) 
+   {
+      Stream.of("I","love","you","","so","much").takeWhile(s->!s.isEmpty())
+         .forEach(System.out::print);
+
+      System.out.println();
+   } 
+}
+```
+
+运行结果如下：
+
+```shell
+Iloveyou
+```
+
+### dropWhile(Predicate Interface)
+
+`dropWhile(Predicate Interface)` 则正好与 `takeWhile()` 方法相反，它首先先抛弃所有的值，直到条件为 true ，然后处理其后的所有值：
+
+```java
+default Stream<T> dropWhile(Predicate<? super T> predicate)
+```
+
+方法签名和 `dropWhile()` 简直一模一样，除了方法名不同外，但是，却是两个截然不同的逻辑，`dropWhile()` 方法也是返回一个有序的流，返回的是由与给定 predicate 匹配的元素开始 ( 但不包括自己 ) 的所有其后元素组成的流。
+
+**示例如下**：
+
+```java
+import java.util.stream.Stream;
+
+public class StreamDropWhileTester{
+
+    public static void main(String[] args) {
+
+      Stream.of("a","b","c","","e","f").dropWhile(s-> !s.isEmpty())
+         .forEach(System.out::print);
+
+      System.out.println();
+      Stream.of("a","b","c","","e","","f").dropWhile(s-> !s.isEmpty())
+         .forEach(System.out::print);
+   } 
+}
+```
+
+运行结果如下：
+
+```shell
+ef
+ef
+```
+
+可以看到，空字符串之前的字符 a 、b、c 都被扔掉了，而且只返回了 ef。
+
+### iterate()
+
+`iterate()` 会循环遍历流中的数据，直到条件返回 false 时停止：
+
+```java
+static <T> Stream<T> iterate(T seed, Predicate<? super T> hasNext, UnaryOperator<T> next)
+```
+
+第一个参数 seed 表示初始化循环变量，第二个参数 hasNext 则为循环终止条件，第三个参数 next 则用于生成下一个循环值。
+
+**示例如下**：
+
+```java
+import java.util.stream.IntStream;
+
+public class StreamIterateTester{
+
+    public static void main(String[] args) {
+      IntStream.iterate(3, x -> x < 20, x -> x+ 3).forEach(System.out::println);
+   } 
+}
+```
+
+运行结果如下：
+
+```shell
+3
+6
+9
+12
+15
+18
+```
+
+### ofNullable()
+
+`ofNullable()` 方法用来阻止 `NullPointerExceptions` 并避免对流进行 `null` 检查：
+
+```java
+static <T> Stream<T> ofNullable(T t)
+```
+
+如果传递的元素 t 非空，则返回由参数元素组成的有序流，否则返回一个空的流。
+
+**示例如下**：
+
+```java
+import java.util.stream.Stream;
+
+public class StreamOfNullableTester{
+
+    public static void main(String[] args) {
+
+      long count = Stream.ofNullable(100).count();
+      System.out.println(count);
+
+      count = Stream.ofNullable(null).count();
+      System.out.println(count);
+   } 
+}
+```
+
+运行结果如下：
+
+```shell
+1
+0
+```
+
+## try-with-resources语句
+
+如果使用过 Python ，应该对 with 语句不陌生，with 语句会创建一个独立的上下文，当执行流程离开该上下文时，就会立刻释放该上下文中的所有资源。因为这样的机制让开发者不用手动去关闭已经打开的资源，比如文件、数据流等，例如：
+
+```python
+with open('hello.txt') as f:
+    print(f.read()
+```
+
+在执行流程离开 `with` 语句块之后，`f` 这个文件资源就会自动销毁，Java 9 为 java 也引入了这种机制，Java 9 称之为 「 try-with-resources 」，其实应该说 Java 9 之前也能实现这样的机制，只不过有点复杂。
+
+try-with-resources 首先是一个 try 语句，其次，该语句包含一个或多个正式声明的资源。这些资源是一个对象，当不再需要时就应该关闭它。
+
+try-with-resources 语句可以确保在需求完成后关闭每个资源，当然了，这些可以自动关闭的资源也是有条件的，那就是必须实现 `java.lang.AutoCloseable` 或 `java.io.Closeable` 接口。
+
+Java 9 之前，资源可以在 try 之前或 try 语句内部声明，示例如下：
+
+```java
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.Reader;
+import java.io.StringReader;
+
+public class TryResourceTester {
+   public static void main(String[] args) throws IOException {
+
+      System.out.println(readData("test"));
+   } 
+   static String readData(String message) throws IOException {
+
+      Reader inputString = new StringReader(message);
+      BufferedReader br = new BufferedReader(inputString);
+      try (BufferedReader br1 = br) {
+         return br1.readLine();
+      }
+   }
+}
+```
+
+运行结果如下：
+
+```shell
+test
+```
+
+这里明显能够看出为了关闭 `BufferedReader`，居然重新声明了一个 `br1` 变量，所以 Java 9 解决了这个问题，就是我们可以忽略 `br1` 的声明，而直接使用 `br` ，并且会在不需要的时候自动关闭它，示例如下：
+
+```java
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.Reader;
+import java.io.StringReader;
+
+public class TryResourceTester {
+   public static void main(String[] args) throws IOException {
+
+      System.out.println(readData("test"));
+   } 
+   static String readData(String message) throws IOException {
+
+      Reader inputString = new StringReader(message);
+      BufferedReader br = new BufferedReader(inputString);
+      try (br) {
+         return br.readLine();
+      }
+   }
+}
+```
+
+运行结果如下：
+
+```shell
+test
+```
+
+## 增强@Deprecated注解
+
+@Deprecated 注解是 Java 5 引入的，一个使用 @Deprecated 注解的元素，无论是一个类或是一个方法，可能是由以下原因导致了不应该再使用它：
+
+1、使用它可能会导致错误；
+2、在未来的版本中不被兼容；
+3、在未来的版本中可能会被删除；
+4、存在更好的更有效的替代方法；
+
+如果一个程序或代码片段使用了 @Deprecated 注解的元素，那么编译器就会生成一个警告信息，表明这个元素是不被推荐使用的。
+
+我们都一直延续了这样的习惯好久，直到 Java 9 的发布，我才发现 @Deprecated 注解还可以做的更好，Java 9 对 @Deprecated 注解做了两项重要的增强：
+
+1、forRemoval：指示在将来的版本中是否要删除带注解的元素默认值为 false；
+2、since：返回注解元素刚添加 @Deprecated 注解的版本；
+
+## 内部类的方块操作符
+
+方块操作符 ( `<>` ) 在 Java 7 中就引入了，目的是为了使代码更可读。但是这个操作符一直不能在匿名内部类中使用，直到 Java 9 修正了这个问题，就是可以在匿名内部类中使用方块操作符，先看一段 Java 9 之前的代码：
+
+```java
+public class DiamondOperatorTester {
+   public static void main(String[] args) {
+      Handler<Integer> intHandler = new Handler<Integer>(1) {
+         @Override
+         public void handle() {
+            System.out.println(content);
+         }
+      };
+      intHandler.handle();
+      Handler<? extends Number> intHandler1 = new Handler<Number>(2) {
+         @Override
+         public void handle() {
+            System.out.println(content);
+         }
+      };
+      intHandler1.handle();
+      Handler<?> handler = new Handler<Object>("test") {
+         @Override
+         public void handle() {
+            System.out.println(content);
+         }
+      };
+      handler.handle();    
+   }  
+}
+abstract class Handler<T> {
+   public T content;
+
+   public Handler(T content) {
+      this.content = content; 
+   }
+
+   abstract void handle();
+}
+```
+
+运行结果如下：
+
+```shell
+1
+2
+test
+```
+
+再看一段 Java 9 的代码：
+
+```java
+public class DiamondOperatorTester {
+   public static void main(String[] args) {
+      Handler<Integer> intHandler = new Handler<>(1) {
+         @Override
+         public void handle() {
+            System.out.println(content);
+         }
+      };
+      intHandler.handle();
+      Handler<? extends Number> intHandler1 = new Handler<>(2) {
+         @Override
+         public void handle() {
+            System.out.println(content);
+         }
+      };
+      intHandler1.handle();
+      Handler<?> handler = new Handler<>("test") {
+         @Override
+         public void handle() {
+            System.out.println(content);
+         }
+      };
+      handler.handle();    
+   }  
+}
+abstract class Handler<T> {
+   public T content;
+
+   public Handler(T content) {
+      this.content = content; 
+   }
+
+   abstract void handle();
+}
+```
+
+运行结果如下：
+
+```shell
+1
+2
+test
+```
+
+## 增强Option类
+
+其实 Option 类在 Java 8 中就引入了，用于避免 `null` 检查和 `NullPointerException` 指针问题，在 Java 9 中又为该类添加了三个方法来改进它的功能：
+
+| 方法              | 说明                                                         |
+| :---------------- | :----------------------------------------------------------- |
+| stream()          | 返回包含值的流，如果值不存在，则返回空流                     |
+| ifPresentOrElse() | 如果值存在则对值执行一些操作，否则执行另一个操作             |
+| or()              | 如果值存在，则返回用于描述该值的 `Option`，如果不存在则生成一个值 |
+
+### steam()方法
+
+如果值存在，则返回包含值的有序的流，如果值不存在，则返回一个空流：
+
+```java
+public Optional<T> or(Supplier<? extends Optional<? extends T>> supplier)
+```
+
+**示例如下**：
+
+```java
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+public class OptionStreamTester {
+public static void main(String[] args) {
+   List<Optional<String>> list = Arrays.asList (
+      Optional.empty(), 
+      Optional.of("A"), 
+      Optional.empty(), 
+      Optional.of("B"));
+
+      //filter the list based to print non-empty values
+
+      //if optional is non-empty, get the value in stream, otherwise return empty
+      List<String> filteredList = list.stream()
+         .flatMap(o -> o.isPresent() ? Stream.of(o.get()) : Stream.empty())
+         .collect(Collectors.toList());
+
+      //Optional::stream method will return a stream of either one 
+      //or zero element if data is present or not.
+      List<String> filteredListJava9 = list.stream()
+         .flatMap(Optional::stream)
+         .collect(Collectors.toList());
+
+      System.out.println(filteredList);
+      System.out.println(filteredListJava9);
+   }  
+}
+```
+
+运行结果如下：
+
+```shell
+[A, B]
+[A, B]
+```
+
+在这个范例中，我们先创建了一个字符串列表，这一个可空的字符串列表。
+
+而且我们使用了 Java 9 中的 stream() 方法和非 stream() 方法来输出列表中的不为空的元素，对比下使用 Option::steam() 方法的确简练了很多。
+
+### ifPresentOrElse()方法
+
+如果值存在则对值执行一个动作 action，如果值不存在则执行另一个动作 emptyAction：
+
+```java
+public void ifPresentOrElse(Consumer<? super T> action, Runnable emptyAction)
+```
+
+**示例如下**：
+
+```java
+import java.util.Optional;
+
+public class OptionIfPresentOrElseTester {
+   public static void main(String[] args) {
+      Optional<Integer> optional = Optional.of(1);
+
+      optional.ifPresentOrElse( x -> System.out.println("Value: " + x),() -> 
+         System.out.println("Not Present."));
+
+      optional = Optional.empty();
+
+      optional.ifPresentOrElse( x -> System.out.println("Value: " + x),() -> 
+         System.out.println("Not Present."));
+   }  
+}
+```
+
+运行结果如下：
+
+```shell
+Value: 1
+Not Present.
+```
+
+### or()方法
+
+如果值存在，则返回一个描述该值的 Option ，否则使用 supplier 生成一个值：
+
+```java
+public Optional<T> or(Supplier<? extends Optional<? extends T>> supplier)
+```
+
+**示例如下**：
+
+```java
+import java.util.Optional;
+import java.util.function.Supplier;
+
+public class OptionOrTester {
+   public static void main(String[] args) {
+      Optional<String> optional1 = Optional.of("Mahesh");
+
+      Supplier<Optional<String>> supplierString = () -> Optional.of("Not Present");
+
+      optional1 = optional1.or( supplierString);
+
+      optional1.ifPresent( x -> System.out.println("Value: " + x));
+
+      optional1 = Optional.empty();    
+
+      optional1 = optional1.or( supplierString);
+
+      optional1.ifPresent( x -> System.out.println("Value: " + x));  
+   }  
+}
+```
+
+运行结果如下：
+
+```shell
+Value: Mahesh
+Value: Not Present
+```
+
+## 多分辨率图像API
+
+Java 9 引入了一种新的多分辨率图像 API，它支持具有不同分辨率变体的多个图像，这些 API 允许将具有不同分辨率的一组图像用作单个多分辨率图像。
+
+| 方法                                                         | 说明                                                   |
+| :----------------------------------------------------------- | :----------------------------------------------------- |
+| getResolutionVariant(double destImageWidth, double destImageHeight) | 获取特定图像，该图像是表示指定大小的逻辑图像的最佳变体 |
+| getResolutionVariants()                                      | 以可读列表的形式返回所有分辨率变体                     |
+
+假设存在三张图片：
+
+![1-1](https://raw.githubusercontent.com/AntonyCheng/java-notes/master/assets/1-1.png)![1-1](https://raw.githubusercontent.com/AntonyCheng/java-notes/master/assets/1-2.png)![1-1](https://raw.githubusercontent.com/AntonyCheng/java-notes/master/assets/1-3.png)
+
+地址分别是：
+
+```
+https://raw.githubusercontent.com/AntonyCheng/java-notes/master/assets/1-1.png
+
+https://raw.githubusercontent.com/AntonyCheng/java-notes/master/assets/1-2.png
+
+https://raw.githubusercontent.com/AntonyCheng/java-notes/master/assets/1-3.png
+```
+
+示例代码如下：
+
+```java
+import javax.imageio.ImageIO;
+import java.awt.*;
+import java.awt.image.BaseMultiResolutionImage;
+import java.awt.image.MultiResolutionImage;
+import java.io.IOException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+
+public class MultiResolutionTester {
+   public static void main(String[] args) throws IOException {
+        List<String> imgUrls = List.of("https://raw.githubusercontent.com/AntonyCheng/java-notes/master/assets/1-1.png",
+            "https://raw.githubusercontent.com/AntonyCheng/java-notes/master/assets/1-2.png",
+            "https://raw.githubusercontent.com/AntonyCheng/java-notes/master/assets/1-3.png");
+
+        List<Image> images = new ArrayList<Image>();
+
+        for (String url : imgUrls) {
+            images.add(ImageIO.read(new URL(url)));
+        }
+
+        // read all images into one multiresolution image
+        MultiResolutionImage multiResolutionImage =
+            new BaseMultiResolutionImage(images.toArray(new Image[0]));
+
+        // get all variants of images
+        List<Image> variants = multiResolutionImage.getResolutionVariants();
+
+        System.out.println("Total number of images: " + variants.size());
+
+        for (Image img : variants) {
+            System.out.println(img);
+        }
+
+        // get a resolution-specific image variant for each indicated size
+        Image variant1 = multiResolutionImage.getResolutionVariant(156, 45);
+        System.out.printf("\nImage for destination[%d,%d]: [%d,%d]",
+            156, 45, variant1.getWidth(null), variant1.getHeight(null));
+
+        Image variant2 = multiResolutionImage.getResolutionVariant(311, 89);
+        System.out.printf("\nImage for destination[%d,%d]: [%d,%d]", 311, 89,
+            variant2.getWidth(null), variant2.getHeight(null));
+
+        Image variant3 = multiResolutionImage.getResolutionVariant(622, 178);
+        System.out.printf("\nImage for destination[%d,%d]: [%d,%d]", 622, 178,
+            variant3.getWidth(null), variant3.getHeight(null));
+
+        Image variant4 = multiResolutionImage.getResolutionVariant(300, 300);
+        System.out.printf("\nImage for destination[%d,%d]: [%d,%d]", 300, 300,
+            variant4.getWidth(null), variant4.getHeight(null));
+    }
+}
+```
+
+运行结果如下：
+
+```java
+Total number of images: 3
+BufferedImage@54c5a2ff: type = 6 ColorModel: #pixelBits = 32 numComponents = 4 color space = java.awt.color.ICC_ColorSpace@117159c0 transparency = 3 has alpha = true isAlphaPre = false ByteInterleavedRaster: width = 32 height = 32 #numDataElements 4 dataOff[0] = 3
+BufferedImage@1cf6d1be: type = 6 ColorModel: #pixelBits = 32 numComponents = 4 color space = java.awt.color.ICC_ColorSpace@117159c0 transparency = 3 has alpha = true isAlphaPre = false ByteInterleavedRaster: width = 64 height = 64 #numDataElements 4 dataOff[0] = 3
+BufferedImage@663c9e7a: type = 6 ColorModel: #pixelBits = 32 numComponents = 4 color space = java.awt.color.ICC_ColorSpace@117159c0 transparency = 3 has alpha = true isAlphaPre = false ByteInterleavedRaster: width = 128 height = 128 #numDataElements 4 dataOff[0] = 3
+
+Image for destination[156,45]: [128,128]
+Image for destination[311,89]: [128,128]
+Image for destination[622,178]: [128,128]
+Image for destination[300,300]: [128,128]
+```
+
+## 增强CompletableFuture API
+
+`CompletableFuture` 类是在 Java 8 引入的。用于表示一个 `Feture` 的状态，可以通过设置其值或状态来明确表示 `Feture` 处于完成状态。
+
+并发编程里有一个概念就是并发执行是否完成了。这个是否完成了是由 `java.util.concurrent.CompletionStage` 来表示的，`CompletableFuture` 是 `CompletionStage` 的父类。
+
+如果对 Java 的并发编程熟悉，那么一定知道，当并发完成时可以支持一个回调，这个回调也是由 `CompletableFuture` 提供的。有时候会觉得，一个特性，应该在它出现的时候就比较完善了，直到别人提出了新的思维，才觉得原来还有改进的空间，就比如这个 `CompletableFuture` ，但是 Java 9 竟然还给它添加了一些东西：
+
+1、支持延误和超时(timeout)机制；
+
+2、支持子类化；
+
+3、添加了一些新的工厂方法；
+
+### 支持延误和超时机制
+
+这两个功能是通过新增两个方法来达成的
+
+| 方法                                                    | 说明                                                        |
+| :------------------------------------------------------ | :---------------------------------------------------------- |
+| completeOnTimeout(T value, long timeout, TimeUnit unit) | 如果在指定时间内没完成，则返回一个指定的值                  |
+| orTimeout(long timeout, TimeUnit unit)                  | 如果在指定的时间内没完成，则抛出一个异常 `TimeoutException` |
+
+这两个方法的看起来是差不多的，都是在指定时间内没完成则执行一个动作，只不过前者是返回一个指定的值，后者则直接抛出异常：
+
+```java
+public CompletableFuture<T> completeOnTimeout(T value, long timeout, TimeUnit unit)
+
+public CompletableFuture<T> orTimeout(long timeout, TimeUnit unit)
+```
+
+**示例如下**：
+
+```java
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+
+class CompletableFutureTimeoutTester {
+
+    public static void main(String[] args) {
+        try {
+            CompletableFuture<Integer> future = CompletableFuture.supplyAsync(CompletableFutureTimeoutTester::computeEndlessly)
+                .orTimeout(1, TimeUnit.SECONDS);
+			// 显式等待超时
+            future.get(); 
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+
+        try {
+            int defaultValue = 7;
+            CompletableFuture<Integer> future = CompletableFuture.supplyAsync(CompletableFutureTimeoutTester::computeEndlessly)
+                .completeOnTimeout(defaultValue, 1, TimeUnit.SECONDS);
+            // 显式等待超时
+            Integer result = future.get();
+            System.out.println(result);
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+    }
+
+    private static Integer computeEndlessly() {
+        try {
+            Thread.sleep(Integer.MAX_VALUE);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        return 42;
+    }
+}
+```
+
+运行结果如下：
+
+```shell
+java.util.concurrent.ExecutionException: java.util.concurrent.TimeoutException
+7
+```
+
+### CompletableFuture类的子类化
+
+Java 9 对 `CompletableFuture` 类的子类化的支持也是新增了两个方法，一个是`defaultExecutor()` 方法，返回默认的执行器 ( Executor )，一个是 `newIncompleteFuture()` 返回一个 `CompletableFuture` 的新实例。
+
+#### defaultExecutor() 方法
+
+```java
+public Executor defaultExecutor()
+```
+
+这个方法没有任何参数，但可以返回一个默认的执行器 ( Executor )，这个执行器可以作为那些没有指定执行器的异步方法的执行器，简单的说，就是为异步方法提供一个执行器，子类中可以重写此方法，以返回一个最小化的独立线程作为执行器。
+
+#### newIncompleteFuture() 方法
+
+```java
+public <U> CompletableFuture<U> newIncompleteFuture()
+```
+
+返回 `CompletionStage` 方法返回的的新的不完整 `CompletableFuture`，默认实现是返回 `CompletableFuture` 类的实例，`CompletableFuture` 类的子类应覆盖此方法，以返回与此 `CompletableFuture` 相同的类的实例。
+
+### 工厂方法
+
+#### completedFuture(U value) 工厂方法
+
+```java
+public static <U> CompletableFuture<U> completedFuture(U value)
+```
+
+此工厂方法返回一个已完成的、使用给定值的新 `CompletableFuture` 。
+
+#### completedStage(U value) 工厂方法
+
+```java
+public static <U> CompletionStage<U> completedStage(U value)
+```
+
+此工厂方法返回一个新的使用给定值 value 的已完成的 `CompletionStage`，且仅支持接口 `CompletionStage` 中定义的那些方法。
+
+#### failedStage(Throwable ex) 工厂方法
+
+```java
+public static <U> CompletionStage<U> failedStage(Throwable ex)
+```
+
+此工厂方法返回一个新的 `CompletionStage`，使用给定异常的情况下异常完成，且仅支持接口 `CompletionStage` 中存在的那些方法。
+
+## 其他特性
+
+除了上面介绍的这些比较大的特性，Java 9 还存在着一些比较小的特性，因为不太重要，只将它们罗列再此：
+
+1、对GC（垃圾收集器）改进；
+
+2、堆遍历(Stack-Walking)API；
+
+3、过滤输入的序列化数据；
+
+4、废弃了AppletAPI；
+
+5、IndifyStringConcatenation；
+
+6、EnhancedMethodHandles；
+
+7、Java平台日志记录API和服务器(Service)；
+
+8、紧凑的字符串(CompactStrings)；
+
+9、Nashorn的解析API；
