@@ -24713,3 +24713,367 @@ public static <U> CompletionStage<U> failedStage(Throwable ex)
 8、紧凑的字符串(CompactStrings)；
 
 9、Nashorn的解析API；
+
+# 55.JDK10新特性
+
+## 基于时间的发布版本控制
+
+### Java10 基于时间的发布版本控制
+
+从 Java 10 开始，Oracle 为 Java 版本引入了严格的基于时间的版本控制模型。现在 Java 将在每六个月后发布一个主要版本。Java 10 于 2018 年 3 月发布，以后所有主要版本都计划在未来几年的 3 月和 9 月发布。发布进一步分为三大类。
+
+- 功能发布： 功能发布包含特定于语言的功能、JVM 功能、新/改进的 API、删除/弃用 API。这些功能发布的时间是固定的，并且对要包含在特定版本中的功能没有限制。如果正在开发的功能不是最新版本的一部分，那么它将在下一个版本中计划。
+- 更新版本： 更新版本包括错误修复、安全问题修复、回归修复等。每个更新版本计划在 1 月、4 月、7 月和 10 月的每个季度发布。在宣布下一个功能版本之前，每个功能版本将收到两个更新版本。
+- 长期支持 (LTS) 版本：从 2018 年 9 月开始，每三年发布一次长期支持版本。Oracle 将在未来三年内为此版本提供支持和更新。此版本主要面向在生产部署中使用 Java 的企业。
+
+### JDK 版本格式
+
+```
+$FEATURE.$INTERIM.$UPDATE.$PATCH
+```
+
+- `$FEATURE` ： 此数字表示主要功能发布，每次功能发布后都会增加 1。对于 Java 10，它是 10。
+- `$INTERIM` ： 此数字表示包含错误修复和增强功能的任何非功能、非更新版本。此版本没有任何不兼容的更改、任何 API 删除或对标准 API 的更改。功能发布，将此计数器设为 0。
+- `$UPDATE` ：此数字表示在功能发布后完成的更新发布。例如，2018 年 4 月的 Java 更新版本是 JDK 10.0.1，2018 年 7 月的更新版本是 JDK 10.0.2 等等。
+- `$`PATCH ： 此数字表示仅在紧急情况下促进关键问题时才会增加的任何紧急发布。
+
+### Java10版本控制的示例
+
+```java
+public class Tester {
+   public static void main(String[] args) {
+      Runtime.Version version = Runtime.version();
+      System.out.printf(" feature: %s%n interim: %s%n update: %s%n patch: %s%n",
+         version.feature(), 
+         version.interim(), 
+         version.update(), 
+         version.patch());
+   }
+}
+```
+
+运行效果如下：
+
+```java
+feature: 10
+interim: 0
+update: 2
+patch: 0
+```
+
+## 局部变量类型推断
+
+局部变量类型推断是 Java 10 以后可用语言最明显的变化之一。它允许使用 `var` 定义变量而不指定它的类型。编译器使用提供的值推断变量的类型，但是这种类型推断仅限于局部变量。
+
+### 声明局部变量的新旧用法
+
+**旧用法**：
+
+```java
+String name = "Hello Java10";
+```
+
+**新用法**：
+
+```java
+var name = "Hello Java10";
+
+Map<Integer, String> map1 = new HashMap<>();
+
+var map2 = new HashMap<Integer, String>();
+```
+
+**注意**：
+
+- 在成员变量、方法参数、返回值的情况下没有类型推断。
+- 局部变量应在声明时初始化，否则编译器将无法推断并抛出错误。
+- 局部变量推断在循环语句的初始化块中可用。
+- 没有运行时开销。由于编译器根据提供的值推断类型，因此不会损失性能。
+- 没有动态类型更改。一旦推断出局部变量的类型，它就无法更改。
+- 使用局部变量类型推断可以减少复杂的样板代码。
+
+### 局部变量类型推断的示例
+
+```java
+import java.util.List;
+
+public class Tester {
+   public static void main(String[] args) {
+      var names = List.of("Julie", "Robert", "Chris", "Joseph"); 
+      for (var name : names) {
+         System.out.println(name);
+      }
+      System.out.println("");
+      for (var i = 0; i < names.size(); i++) {
+         System.out.println(names.get(i));
+      }
+   }
+}
+```
+
+运行结果如下：
+
+```shell
+Julie
+Robert
+Chris
+Joseph
+
+Julie
+Robert
+Chris
+Joseph
+```
+
+## 新的功能和选项
+
+JDK10 版本为 Java 库添加了 70 多个新 API 和选项，以下是介绍的一些重要增强功能。
+
+### 主要增强功能
+
+**Optional.orElseThrow()方法**：
+
+`java.util.Optional` 类中提供了一个新方法 `orElseThrow()` ，它现在是 `get()` 方法的首选替代方法。
+
+**用于创建不可修改集合的API**：
+
+List、Set 和 Map 接口中提供了一种新方法 `copyOf()` ，它可以从现有的集合实例创建新的集合实例。收集器类有新的方法 `toUnmodifiableList()`、`toUnmodifiableSet()` 和 `toUnmodifiableMap()` 将流的元素放入不可修改的集合中。
+
+**禁用JRE上次使用跟踪**：
+
+引入了一个新标志 `jdk.disableLastUsageTracking` ，它禁用正在运行的 JVM 的 JRE 上次使用跟踪。
+
+**Hash密码**：
+
+`jmxremote.password` 文件中可用的纯文本密码现在被 JMX 代理用其 SHA3-512 哈希覆盖。
+
+**Javadoc对多个样式表的支持**：
+
+javadoc 命令可以使用一个新选项作为 `--add-stylesheet` 。此选项支持在生成的文档中使用多个样式表。
+
+**Javadoc对覆盖方法的支持**：
+
+javadoc 命令可以使用一个新选项作为 `--overridden-methods=value` 。许多类覆盖继承的方法但不更改规范。`--overridden-methods=value` 选项允许将这些方法与其他继承的方法组合在一起，而不是再次单独记录它们。
+
+**对摘要的javadoc支持**：
+
+新的内联标签 `{@summary ...}` 可用于指定用作 API 描述摘要的文本。默认情况下，API 描述的摘要是从第一句话推断出来的。
+
+### 新的API的示例
+
+```java
+import java.util.List;
+import java.util.stream.Collectors;
+
+public class Tester {
+   public static void main(String[] args) {
+      var ids = List.of(1, 2, 3, 4, 5); 
+      try {
+         // get an unmodifiable list
+         List<Integer> copyOfIds = List.copyOf(ids);
+         copyOfIds.add(6);	
+      } catch(UnsupportedOperationException e){
+         System.out.println("Collection is not modifiable.");
+      }
+      try{
+         // get an unmodifiable list
+         List<Integer> evenNumbers = ids.stream()
+            .filter(i -> i % 2 == 0)
+            .collect(Collectors.toUnmodifiableList());;
+         evenNumbers.add(6);	
+      }catch(UnsupportedOperationException e){
+         System.out.println("Collection is not modifiable.");
+      }
+   }
+}
+```
+
+运行结果如下：
+
+```
+Collection is not modifiable.
+Collection is not modifiable.
+```
+
+## 删除或弃用的功能和选项
+
+**已删除的功能和选项**：
+
+- 删除了 Runtime.getLocalizedInputStream 和 getLocalizedOutputStream 方法- Runtime.getLocalizedInputStream 和 getLocalizedOutputStream 方法不再可用，因为它们是过时的国际化机制的一部分。
+- 删除了 RMI 服务器端多路复用协议支持- RMI 服务器端多路复用协议在 Java 9 中被禁用，在 Java 10 中被删除。
+- 删除了常见的 DOM API - com.sun.java.browser.plugin2.DOM 和 sun.plugin.dom.DOMObject API 已被删除。netscape.javascript.JSObject 可用于修改 DOM。
+- FlatProfiler 删除- FlatProfiler 在 Java 9 中被弃用，在 Java 10 中被删除。
+- 已删除过时的 -X 选项- -Xoss、-Xsqnopause、-Xoptimize、-Xboundthreads 和 -Xusealtsigs，Java 10 中删除了过时的 Hotspot VM 选项。
+- HostServicesgetWebContext 方法已删除- HostServicesgetWebContext 方法已在 Java 9 中被弃用，并在 Java 10 中被删除。
+- 删除了T2K 光栅化器和 ICU 布局引擎 - T2K 光栅化器和 ICU 布局引擎已从 JavaFX 中删除。
+- 删除了 VP6/FXM/FLV 代码- 在 JavaFX Media 中删除了P6 视频编码格式和 FXM/FLV 容器支持。将改用 MP4 容器中的 H.264/AVC1 或 HTTP Live Streaming。
+- 删除了 1.2 之前的 SecurityManager 方法和字段-删除了1.2 之前不推荐使用的 java.lang.SecurityManager 方法和字段（标记为 Removal=true）。
+- policytool removed - policytool 安全工具已被删除。
+- com.sun.security.auth.** 中已弃用的类已删除
+
+以下已弃用的类被删除
+
+- com.sun.security.auth.PolicyFile
+- com.sun.security.auth.SolarisNumericGroupPrincipal
+- com.sun.security.auth.SolarisNumericUserPrincipal
+- com.sun.security.auth.SolarisPrincipal
+- com.sun.security.auth.X500Principal
+- com.sun.security.auth.module.SolarisLoginModule
+- com.sun.security.auth.module.SolarisSystem
+- 已删除旧（JDK 6、JDK 7 和 JDK 8 时代）标准 Doclet - 已删除旧（JDK 6、JDK 7 和 JDK 8 时代）标准 doclet，用于输出 HTML 内容并被替代品取代。
+- javah 工具已删除- 本机标头生成工具 javah 已被删除。
+- Java Launcher 的数据模型选项 -d32 和 -d64 已删除。− 已过时和弃用的选择选项（-d32、-d64、-J-d32 和 -J-d64）已被删除。
+
+**已弃用的功能和选项**：
+
+- 不推荐使用 SNMP 监控支持： 现在不推荐使用支持 JVM 的 SNMP 监控和管理支持的 jdk.snmp 模块，并标记为 forRemoval=true。
+- java.security classes 已弃用：java.security.{Certificate, Identity, IdentityScope, Signer} 类现在已弃用并标记为 forRemoval=true。
+- javax.security.auth.Policy API forRemoval ： 已弃用的 javax.security.auth.Policy 标记为 forRemoval=true。
+- 标记为删除的API ： 以下 API 在 Java 10 版本中也被标记为删除，因为有独立的实现很容易获得。
+- java.activation
+- java.corba
+- java.se.ee (aggregator)
+- java.transaction
+- java.xml.bind
+- java.xml.ws
+- java.xml.ws.annotation
+
+## JIT编译器
+
+JIT编译器是用 C++ 编写的，用于将 Java 转换为字节码。现在 Java 10 可以选择启用基于 Java 的实验性 JIT 编译器 Graal 来代替标准的 JIT 编译器。Graal 正在使用 Java 9 中引入的 JVMCI，即 JVM 编译器接口。 Graal 在 Java 9 中也可用。使用 Java 10，我们可以启用 Graal 来测试和调试实验性 JVM 编译器。
+
+**JIT编译器语法**：
+
+```shell
+java -XX:+UnlockExperimentalVMOptions -XX:+UseJVMCICompiler
+```
+
+Graal 编译器完全重写了基于 C++ 的早期编译器，针对基于 Linux/x64 的平台。Graal 是在 Java 9 中引入的，作为目前使用的 JIT 编译器的替代品。Graal 是 JVM 的插件，可以动态插入。它也支持多语言解释。
+
+**JIT编译器的风险和假设**：
+
+由于 Graal 是实验性的，并且考虑到各种 Hotspots 和带有各种标志选项的 jdk 测试，因此需要进行测试工作。与标准的 JIT Ahead of Time 编译器相比，它可能无法通过一些性能基准测试。
+
+## 应用程序类数据共享
+
+当 JVM 启动时，它会将类加载到内存中作为初步步骤。如果有多个具有多个类的 jar，则第一个请求会出现明显的滞后。在无服务器架构中，这种延迟会延迟启动时间，这是此类架构中的关键操作。应用程序类数据共享概念有助于减少应用程序的启动时间。Java 具有现有的 CDS （类数据共享）功能。通过应用程序类数据共享，Java 10 允许将应用程序类放在共享存档中。这通过跨多个 Java 进程共享公共类元数据来减少应用程序启动和占用空间。
+
+**应用程序类数据共享的过程**：
+
+1、创建要存档的类列表：使用 Java 启动器创建位于 welcome.jar 中的 Greeting.java 类的列表 welcome.lst ；
+
+```shell
+$java -Xshare:off -XX:+UseAppCDS -XX:DumpLoadedClassList=welcome.lst -cp welcome.jar Greeting
+```
+
+2、创建 AppCDS 存档： 存档用于应用程序类数据共享的类列表；
+
+```shell
+$java -Xshare:dump -XX:+UseAppCDS -XX:SharedClassListFile=welcome.lst -XX:SharedArchiveFile=welcome.jsa -cp welcome.jar
+```
+
+3、使用 AppCDS 存档：使用 Java 启动器时使用 AppCDS 存档；
+
+```shell
+$java -Xshare:on -XX:+UseAppCDS -XX:SharedArchiveFile=welcome.jsa -cp welcome.jar Greeting
+```
+
+## 增强垃圾收集
+
+**JEP 304：垃圾收集器接口**
+
+在 Java 10 之前，GC（垃圾收集器）实现组件分散在代码库中，不容易替换。在 Java 10 中，引入了 Garbage-Collector 接口，以便可以插入替代的 GC 实现。它还有助于将代码库与不同的垃圾收集实现隔离。此功能是 JEP 304 的一部分。
+
+**JEP 307：G1 的并行 Full GC**
+
+Java 9 引入了 G1（垃圾优先）垃圾收集器。G1 避免了完全垃圾收集，但如果并发线程寻找收集并且内存恢复速度不够快，则用户体验会受到影响。在 Java 10 中，现在 G1 将使用回退完整垃圾收集。
+
+通过此更改，G1 通过并行使用 Full GC 来改善其最坏情况下的延迟。目前，G1 使用的是单线程的 mark-sweep-compact 算法。使用 JEP 307，并行线程将启动标记-清除-压缩算法。可以使用以下选项控制线程数。
+
+```shell
+$java -XX:ParallelGCThreads=4
+```
+
+## Unicode语言标签扩展
+
+Java 7 引入了对 BCP 47 语言标签的支持。但是这个 `unicode` 语言环境扩展仅限于日历和数字。在 Java 10 中，`java.util.Locale` 和相关类已更新，以实现 LDML 规范中指定的其他 `unicode` 扩展。添加了以下扩展特性。
+
+- cu ： 货币类型
+- fw ： 一周的第一天
+- rg ： 区域覆盖
+- tz ： 时区
+
+以下 API 已更新：
+
+```javajava
+java.text.DateFormat::get*Instance
+java.text.DateFormatSymbols::getInstance
+java.text.DecimalFormatSymbols::getInstance
+java.text.NumberFormat::get*Instance
+java.time.format.DateTimeFormatter::localizedBy
+java.time.format.DateTimeFormatterBuilder::getLocalizedDateTimePattern
+java.time.format.DecimalStyle::of
+java.time.temporal.WeekFields::of
+java.util.Calendar::{getFirstDayOfWeek,getMinimalDaysInWeek}
+java.util.Currency::getInstance
+java.util.Locale::getDisplayName
+java.util.spi.LocaleNameProvider
+```
+
+## 替代内存设备上的堆分配
+
+通过 Java 10 中的这一增强，现在用户可以指定替代内存设备，例如 NV-DIMM 到 HotSpot VM 来分配 Java 堆空间。用户需要使用新选项 `-XX:AllocateHeapAt ` 将路径传递到文件系统。
+
+```shell
+-XX:AllocateHeapAt=~/etc/heap
+```
+
+此选项采用文件路径并进行内存映射以达到所需的结果。其他堆标志如 `-Xmx`、`-Xms` 继续工作。
+
+## 合并JDK多个代码仓库
+
+在JDK 9 中，有八个基于模块的目录，称为 repos。
+
+- root
+- corba
+- hotspot
+- jaxp
+- jaxws
+- jdk
+- langtools
+- nashorn
+
+代码的组织方式如下 ：
+
+```shell
+$ROOT/jdk/src/java.base
+...
+$ROOT/langtools/src/java.compiler
+...
+```
+
+从 Java 10 开始，将 JDK 多个代码仓库合并到一个仓库。现在的结构为 ：
+
+```shell
+$ROOT/src/java.base
+$ROOT/src/java.compiler
+...
+```
+
+## 根证书
+
+Cacerts 存储，在 Java 10 之前是一个空集。它需要包含一组证书，可用于在供应商的各种安全协议的证书链中建立信任。
+
+OpenJDK 构建没有这样的证书，这就是 TLS 等关键安全组件在默认构建中不起作用的原因。
+
+现在，由于 Oracle 已经使用 Oracle JAVA SE Root CA 程序开源了根证书，OpenJDK 构建现在可以拥有根证书，从而可以减少 OpenJDK 和 Oracle JDK 之间的差异。
+
+Oracle JAVA SE Root CA 程序颁发根证书。签署协议的供应商包含在一组根证书中，未注册的供应商将包含在下一个版本中。
+
+## 线程本地握手
+
+在 JDK 10 中，为 JVM 引入了一个新选项 `-XX:ThreadLocalHandshakes` 。此选项仅适用于基于 x64 和 SPARC 的机器。
+
+此选项可用于提高 VM 性能。它允许在不创建全局 VM 安全点的情况下对应用程序线程进行回调。因此允许 JVM 停止单个线程而不停止所有线程。
+
+由于此选项并非适用于所有平台，因此其他平台将回退到正常的安全点。
