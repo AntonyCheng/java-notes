@@ -25185,6 +25185,10 @@ Oracle JAVA SE Root CA 程序颁发根证书。签署协议的供应商包含在
 
 # 56.JDK11新特性
 
+Java 11 是继 Java 8 之后的第一个 LTS 长期支持功能版本。它遵循 Java 发布节奏推出 Java 10，并于 2018 年 9 月发布，距 Java 10 发布仅六个月。
+
+Java 9 和 Java 10 是非 LTS 版本。Java 11 版本是 LTS 版本。
+
 ## 标准HttpClient
 
 Java 9 中引入了增强的 HttpClient API 作为实验性功能。在 Java 11 中，现在 HttpClient 是一个标准。建议使用 Apache Http Client API 等其他 HTTP Client API 代替。它的功能非常丰富，现在基于 Java 的应用程序可以在不使用任何外部依赖的情况下发出 HTTP 请求。
