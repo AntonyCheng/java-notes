@@ -429,9 +429,114 @@
   * [创建Optional对象](#创建optional对象)
   * [从Optional容器中取出所包装的对象](#从optional容器中取出所包装的对象)
   * [练习](#练习-2)
-* [53.JDK8的接口新特性](#53jdk8的接口新特性)
-  * [jdk8之前的接口](#jdk8之前的接口)
-  * [jdk8之后的接口](#jdk8之后的接口)
+* [53.JDK8新特性](#53jdk8新特性)
+  * [前言](#前言)
+  * [收集器Collectors](#收集器collectors)
+    * [求平均值averagingXXX](#求平均值averagingxxx)
+    * [次序操作collectingAndThen](#次序操作collectingandthen)
+    * [计数counting](#计数counting)
+    * [内容拼接joining](#内容拼接joining)
+    * [最值maxBy&minBy](#最值maxbyminby)
+    * [求累加和summingXXX](#求累加和summingxxx)
+    * [转换mapping&flatMapping](#转换mappingflatmapping)
+  * [编解码器Base64](#编解码器base64)
+    * [内部类](#内部类)
+    * [静态方法](#静态方法)
+    * [用法示例](#用法示例)
+  * [接口默认方法](#接口默认方法)
+    * [JDK8之前的接口](#jdk8之前的接口)
+    * [JDK8之后的接口](#jdk8之后的接口)
+  * [Nashorn JavaScript](#nashorn-javascript)
+  * [日期时间API](#日期时间api)
+    * [本地日期时间](#本地日期时间)
+    * [时区日期时间](#时区日期时间)
+    * [格式化](#格式化)
+* [54.JDK9新特性](#54jdk9新特性)
+  * [模块化](#模块化)
+    * [模块化的概念](#模块化的概念)
+    * [创建一个 Java 9 模块](#创建一个-java-9-模块)
+  * [REPL（JShell）](#repljshell)
+    * [运行JShell](#运行jshell)
+    * [查看JShell默认导入哪些包](#查看jshell默认导入哪些包)
+    * [使用import命令导入某个包或文件](#使用import命令导入某个包或文件)
+    * [使用JShell进行一些简单的数学运算](#使用jshell进行一些简单的数学运算)
+    * [JShell中默认的上下文](#jshell中默认的上下文)
+    * [在JShell中定义一些方法](#在jshell中定义一些方法)
+    * [退出JShell](#退出jshell)
+  * [改进JavaDocs](#改进javadocs)
+    * [旧的JavaDoc文档格式](#旧的javadoc文档格式)
+    * [新的JavaDoc文档格式](#新的javadoc文档格式)
+  * [多版本共存JAR](#多版本共存jar)
+    * [JAR多版本共存原理](#jar多版本共存原理)
+    * [多版本编译示例](#多版本编译示例)
+  * [集合不可变实例工厂方法](#集合不可变实例工厂方法)
+    * [旧的创建不可变集合的方法](#旧的创建不可变集合的方法)
+    * [新的创建不可变集合的方法](#新的创建不可变集合的方法)
+  * [接口的私有方法](#接口的私有方法)
+    * [Java8之前的接口](#java8之前的接口)
+    * [Java8的接口](#java8的接口)
+    * [Java9的接口](#java9的接口)
+  * [改进进程管理API](#改进进程管理api)
+    * [ProcessHandle类](#processhandle类)
+    * [范例](#范例)
+  * [增强流(Stream)API](#增强流streamapi)
+    * [takeWhile(Predicate Interface)](#takewhilepredicate-interface)
+    * [dropWhile(Predicate Interface)](#dropwhilepredicate-interface)
+    * [iterate()](#iterate)
+    * [ofNullable()](#ofnullable)
+  * [try-with-resources语句](#try-with-resources语句)
+  * [增强@Deprecated注解](#增强deprecated注解)
+  * [内部类的方块操作符](#内部类的方块操作符)
+  * [增强Option类](#增强option类)
+    * [steam()方法](#steam方法)
+    * [ifPresentOrElse()方法](#ifpresentorelse方法)
+    * [or()方法](#or方法)
+  * [多分辨率图像API](#多分辨率图像api)
+  * [增强CompletableFuture API](#增强completablefuture-api)
+    * [支持延误和超时机制](#支持延误和超时机制)
+    * [CompletableFuture类的子类化](#completablefuture类的子类化)
+      * [defaultExecutor() 方法](#defaultexecutor-方法)
+      * [newIncompleteFuture() 方法](#newincompletefuture-方法)
+    * [工厂方法](#工厂方法)
+      * [completedFuture(U value) 工厂方法](#completedfutureu-value-工厂方法)
+      * [completedStage(U value) 工厂方法](#completedstageu-value-工厂方法)
+      * [failedStage(Throwable ex) 工厂方法](#failedstagethrowable-ex-工厂方法)
+  * [其他特性](#其他特性)
+* [55.JDK10新特性](#55jdk10新特性)
+  * [基于时间的发布版本控制](#基于时间的发布版本控制)
+    * [Java10 基于时间的发布版本控制](#java10-基于时间的发布版本控制)
+    * [JDK 版本格式](#jdk-版本格式)
+    * [Java10版本控制的示例](#java10版本控制的示例)
+  * [局部变量类型推断](#局部变量类型推断)
+    * [声明局部变量的新旧用法](#声明局部变量的新旧用法)
+    * [局部变量类型推断的示例](#局部变量类型推断的示例)
+  * [新的功能和选项](#新的功能和选项)
+    * [主要增强功能](#主要增强功能)
+    * [新的API的示例](#新的api的示例)
+  * [删除或弃用的功能和选项](#删除或弃用的功能和选项)
+  * [JIT编译器](#jit编译器)
+  * [应用程序类数据共享](#应用程序类数据共享)
+  * [增强垃圾收集](#增强垃圾收集)
+  * [Unicode语言标签扩展](#unicode语言标签扩展)
+  * [替代内存设备上的堆分配](#替代内存设备上的堆分配)
+  * [合并JDK多个代码仓库](#合并jdk多个代码仓库)
+  * [根证书](#根证书)
+  * [线程本地握手](#线程本地握手)
+* [56.JDK11新特性](#56jdk11新特性)
+  * [标准HttpClient](#标准httpclient)
+    * [使用 HttpClient 的步骤](#使用-httpclient-的步骤)
+    * [使用 HttpClient的示例](#使用-httpclient的示例)
+  * [免编译启动](#免编译启动)
+  * [增强String的API](#增强string的api)
+  * [增强集合转换为数组](#增强集合转换为数组)
+  * [增强文件API](#增强文件api)
+  * [增强Optional类](#增强optional类)
+  * [增强Predicate接口](#增强predicate接口)
+  * [Lambda中使用var关键字](#lambda中使用var关键字)
+  * [嵌套类的使用](#嵌套类的使用)
+  * [删除或弃用的API](#删除或弃用的api)
+    * [删除的API](#删除的api)
+    * [弃用的API](#弃用的api)
 
 # 0.编程规范
 
@@ -25077,3 +25182,409 @@ Oracle JAVA SE Root CA 程序颁发根证书。签署协议的供应商包含在
 此选项可用于提高 VM 性能。它允许在不创建全局 VM 安全点的情况下对应用程序线程进行回调。因此允许 JVM 停止单个线程而不停止所有线程。
 
 由于此选项并非适用于所有平台，因此其他平台将回退到正常的安全点。
+
+# 56.JDK11新特性
+
+## 标准HttpClient
+
+Java 9 中引入了增强的 HttpClient API 作为实验性功能。在 Java 11 中，现在 HttpClient 是一个标准。建议使用 Apache Http Client API 等其他 HTTP Client API 代替。它的功能非常丰富，现在基于 Java 的应用程序可以在不使用任何外部依赖的情况下发出 HTTP 请求。
+
+### 使用 HttpClient 的步骤
+
+以下是使用 HttpClient 的步骤：
+
+- 使用 HttpClient.newBuilder() 实例创建 HttpClient 实例；
+- 使用 HttpRequest.newBuilder() 实例创建 HttpRequest 实例；
+- 使用 HttpClient.send() 发出请求并获取响应对象。
+
+### 使用 HttpClient的示例
+
+```java
+import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
+
+public class APITester {
+   public static void main(String[] args) {
+      HttpClient httpClient = HttpClient.newBuilder()
+         .version(HttpClient.Version.HTTP_2)
+         .connectTimeout(Duration.ofSeconds(10))
+         .build(); 
+         try {
+            HttpRequest request = HttpRequest.newBuilder()
+            .GET()
+            .uri(URI.create("https://www.yiidian.com"))
+            .build();                              
+            HttpResponse<String> response = httpClient.send(request,
+            HttpResponse.BodyHandlers.ofString()); 
+
+         System.out.println("Status code: " + response.statusCode());                            
+         System.out.println("Headers: " + response.headers().allValues("content-type"));
+         System.out.println("Body: " + response.body());
+      } catch (IOException | InterruptedException e) {
+         e.printStackTrace();
+      }
+   }
+}
+```
+
+运行结果如下：
+
+```html
+Status code: 200
+Headers: [text/html; charset=ISO-8859-1]
+Body: <!doctype html>
+...
+</html>
+```
+
+## 免编译启动
+
+从 Java 11 开始，现在可以轻松运行单个 Java 文件而无需编译。考虑以下示例 ：
+
+```java
+public class Tester {
+   public static void main(String[] args) {
+     System.out.println("Hello World!"); 
+   }
+}
+```
+
+**运行文件的旧方式**：
+
+```shell
+$ javac ApiTester.java
+$ java Tester
+Hello World!
+```
+
+**新的文件运行方式**：
+
+```shell
+$ java ApiTester.java
+Hello World!
+```
+
+## 增强String的API
+
+Java 11 为 String 引入了多项增强功能：
+
+- String.repeat(int) ： 重复给定次数的字符串。返回连接的字符串。
+- String.isBlank() ：检查字符串是否为空或只有空格。
+- String.strip() ： 删除前导和尾随空格。
+- String.stripLeading() ： 删除前导空格。
+- String.stripTrailing() ： 删除尾随空格。
+- String.lines() ： 返回多行字符串的行流。
+
+**增强String的API的示例**：
+
+```java
+import java.util.ArrayList;
+import java.util.List;
+
+public class APITester {
+   public static void main(String[] args) {
+      String sample = " abc ";
+      System.out.println(sample.repeat(2)); // " abc  abc "
+      System.out.println(sample.isBlank()); // false
+      System.out.println("".isBlank()); // true
+      System.out.println("   ".isBlank()); // true
+      System.out.println(sample.strip()); // "abc"
+      System.out.println(sample.stripLeading()); // "abc "
+      System.out.println(sample.stripTrailing()); // " abc"
+      sample = "This\nis\na\nmultiline\ntext.";
+
+      List<String> lines = new ArrayList<>();
+
+      sample.lines().forEach(line -> lines.add(line));
+      lines.forEach(line -> System.out.println(line));
+   }
+}
+```
+
+运行结果如下：
+
+```shell
+abc  abc 
+false
+true
+true
+abc
+abc 
+ abc
+This
+is
+a
+multiline
+text.
+```
+
+## 增强集合转换为数组
+
+**Java11之前的方法**：
+
+```java
+nameList.toArray(new String[nameList.size()]);
+```
+
+**Java11的方法**：
+
+```java
+nameArray = nameList.toArray(String[]::new);
+```
+
+**集合转换为数组的示例**：
+
+```java
+import java.util.Arrays;
+import java.util.List;
+
+public class APITester {
+   public static void main(String[] args) {		
+      List<String> namesList = Arrays.asList("Joe", "Julie");
+      // Old way
+      String[] names = namesList.toArray(new String[namesList.size()]);
+      System.out.println(names.length);
+      // New way
+      names = namesList.toArray(String[]::new);
+      System.out.println(names.length);
+   }
+}
+```
+
+运行结果如下：
+
+```shell
+2
+2
+```
+
+## 增强文件API
+
+Java 11 通过提供新的重载方法而无需编写大量样板代码，引入了一种读取和写入文件的简单方法。
+
+**文件API的示例**：
+
+```java
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+
+public class APITester {
+   public static void main(String[] args) {		
+      try {
+         Path tempFilePath = Files.writeString(
+            Path.of(File.createTempFile("tempFile", ".tmp").toURI()),
+            "Hello Java11", 
+            Charset.defaultCharset(), StandardOpenOption.WRITE);
+
+         String fileContent = Files.readString(tempFilePath);
+
+         System.out.println(fileContent);
+      } catch (IOException e) {
+         e.printStackTrace();
+      }
+   }
+}
+```
+
+运行结果如下：
+
+```shell
+Hello Java11
+```
+
+## 增强Optional类
+
+Java 11 向 Optional 类引入了新方法 `isEmpty()` 来检查值是否存在。如果值存在，则 `isEmpty()` 返回 false，否则返回 true。
+
+它可以用作 `isPresent()` 方法的替代方法，该方法通常需要否定以检查值是否不存在。
+
+**Optional类的示例**：
+
+```java
+import java.util.Optional;
+
+public class APITester {
+   public static void main(String[] args) {		
+      String name = null;
+
+      System.out.println(!Optional.ofNullable(name).isPresent());
+      System.out.println(Optional.ofNullable(name).isEmpty());
+
+      name = "Joe";
+      System.out.println(!Optional.ofNullable(name).isPresent());
+      System.out.println(Optional.ofNullable(name).isEmpty());
+   }
+}
+```
+
+运行结果如下：
+
+```shell
+true
+true
+false
+false
+```
+
+## 增强Predicate接口
+
+Java 11 向 Predicate 接口引入了新方法 `not()` 来否定类似于 `negate()` 方法的现有谓词。
+
+**Predicate接口的示例**：
+
+```java
+import java.util.Arrays;
+import java.util.List;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+
+public class APITester {
+   public static void main(String[] args) {		
+      List<String> tutorialsList = Arrays.asList("Java", "\n", "HTML", " ");
+
+      List<String> tutorials = tutorialsList.stream()
+         .filter(Predicate.not(String::isBlank))
+         .collect(Collectors.toList());
+
+      tutorials.forEach(tutorial -> System.out.println(tutorial));
+   }
+}
+```
+
+运行结果如下：
+
+```shell
+Java
+HTML
+```
+
+## Lambda中使用var关键字
+
+Java 11 允许在 lambda 表达式中使用 var，它可用于将修饰符应用于局部变量。
+
+**Lambda中使用var关键字的示例**：
+
+```java
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
+@interface NonNull {}
+
+public class APITester {
+   public static void main(String[] args) {		
+      List<String> tutorialsList = Arrays.asList("Java", "HTML");
+
+      String tutorials = tutorialsList.stream()
+         .map((@NonNull var tutorial) -> tutorial.toUpperCase())
+         .collect(Collectors.joining(", "));
+
+      System.out.println(tutorials);
+   }
+}
+```
+
+运行结果如下：
+
+```shell
+Java
+HTML
+```
+
+**Lambda中使用var的限制**：
+
+1、var 参数不能与其他参数混合使用。以下将抛出编译错误：
+
+```java
+(var v1, v2) -> v1 + v2
+```
+
+2、var 参数不能与其他类型参数混合使用。以下将抛出编译错误：
+
+```java
+(var v1, String v2) -> v1 + v2
+```
+
+3、var 参数只能与括号一起使用。以下将抛出编译错误：
+
+```java
+var v1 -> v1.toLowerCase()
+```
+
+## 嵌套类的使用
+
+Java 11 引入了嵌套类的概念，可以在类中声明一个类。这种类的嵌套允许在一个地方对要使用的类进行逻辑分组，使它们更具可读性和可维护性。嵌套类可以有四种类型：
+
+- 静态嵌套类
+- 非静态嵌套类
+- 本地类
+- 匿名类
+
+Java 11 还提供了嵌套的概念，以允许嵌套类的通信和验证。
+
+**嵌套类的示例**：
+
+```java
+import java.util.Arrays;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+public class APITester {
+   public static void main(String[] args) {		
+      boolean isNestMate = APITester.class.isNestmateOf(APITester.Inner.class);
+      boolean nestHost = APITester.Inner.class.getNestHost() == APITester.class;
+
+      System.out.println(isNestMate);
+      System.out.println(nestHost);
+
+      Set<String> nestedMembers = Arrays.stream(APITester.Inner.class.getNestMembers())
+         .map(Class::getName)
+         .collect(Collectors.toSet());
+      System.out.println(nestedMembers);
+   }
+   public class Inner{}
+}
+```
+
+运行结果如下：
+
+```shell
+true
+true
+[APITester$Inner, APITester]
+```
+
+## 删除或弃用的API
+
+### 删除的API
+
+**Java EE 和 CORBA**：
+
+以下已弃用的 Java EE 和 CORBA 从 Java 11 版本中删除。
+
+- 基于 XML 的 Web 服务的 Java API (java.xml.ws)
+- XML 绑定的 Java 体系结构 (java.xml.bind)
+- JavaBeans 激活框架 (java.activation)
+- 常用注解（java.xml.ws.annotation）
+- 通用对象请求代理架构 (java.corba)
+- JavaTransaction API (java.transaction)
+
+这些API 可作为第三方站点的独立版本使用。
+
+**JMC 和 JavaFX**：
+
+- JDK Mission Control (JMC) 从标准 JDK 中删除。它可作为独立下载使用。
+- JavaFX 也从标准 JDK 中删除。它可以作为单独的模块下载。
+
+### 弃用的API
+
+- 不推荐使用 Nashorn JavaScript 引擎和 JJS 工具。
+- JAR 文件的 Pack200 压缩方案已弃用。
