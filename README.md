@@ -24060,8 +24060,6 @@ native 进程 ID 是操作系统分配给进程的标识号，这个 ID 值的�
 ### 范例
 
 ```java
-package org.dromara.system;
-
 import lombok.SneakyThrows;
 
 import java.io.IOException;
